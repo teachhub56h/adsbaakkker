@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AdTally — Watch Ads, Track Your Points</title>
+<meta name="description" content="Watch ads and track your points. No signup, no limits, no payouts." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="grain"></div>
+
+  <header class="topbar" id="top">
+    <div class="brand">
+      <span class="brand-mark">●</span>
+      <span class="brand-name">AdTally</span>
+    </div>
+  </header>
+
+  <main class="stage">
+
+    <!-- HERO: points balance -->
+    <section class="counter-block" aria-live="polite">
+      <p class="counter-label">Your points</p>
+      <div class="odometer" id="odometer">
+        <span class="digit" data-d="0">0</span><span class="digit" data-d="0">0</span><span class="digit" data-d="0">0</span><span class="digit" data-d="0">0</span><span class="digit" data-d="0">0</span>
+      </div>
+      <p class="counter-sub">1 ad watched = 1 point · not cash, just progress</p>
+    </section>
+
+    <!-- STATS GRID -->
+    <section class="dashboard" id="statsTop">
+      <div class="dash-grid">
+        <div class="dash-card">
+          <p class="dash-num" id="statTotal">0</p>
+          <p class="dash-label">Total ads watched</p>
+        </div>
+        <div class="dash-card">
+          <p class="dash-num" id="statToday">0</p>
+          <p class="dash-label">Watched today</p>
+        </div>
+        <div class="dash-card">
+          <p class="dash-num" id="statStreak">0</p>
+          <p class="dash-label">Day streak</p>
+        </div>
+        <div class="dash-card">
+          <p class="dash-num" id="statLast">—</p>
+          <p class="dash-label">Last watched</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTION BUTTONS -->
+    <section class="action-row">
+      <button id="watchBtn" class="action-btn action-primary">
+        <span class="action-icon">▶</span>
+        <span>Watch Ad</span>
+      </button>
+      <button id="shareBtn" class="action-btn action-secondary">
+        <span class="action-icon">↗</span>
+        <span>Copy My Link</span>
+      </button>
+    </section>
+
+    <!-- AD SLOT (hidden until Watch Ad is tapped) -->
+    <section class="ad-block" id="adSection" hidden>
+      <div class="ad-frame" id="adFrame">
+        <div class="ad-playing" id="adPlaying">
+          <!--
+            REAL AD NETWORK GOES HERE.
+            Replace this placeholder box with your ad network's embed script
+            (e.g. Google AdSense, Adsterra, Monetag, PropellerAds).
+            Keep the #adTimerRing and countdown text — script.js drives them.
+          -->
+          <div class="ad-placeholder">
+            <p class="ad-placeholder-label">AD SLOT</p>
+            <p class="ad-placeholder-note">Replace with your ad network's embed code</p>
+          </div>
+          <div class="timer-ring-wrap">
+            <svg class="timer-ring" viewBox="0 0 64 64">
+              <circle class="ring-bg" cx="32" cy="32" r="28"></circle>
+              <circle class="ring-fg" id="ringFg" cx="32" cy="32" r="28"></circle>
+            </svg>
+            <span class="timer-num" id="timerNum">15</span>
+          </div>
+        </div>
+
+        <div class="ad-done" id="adDone" hidden>
+          <p class="ad-eyebrow">Counted</p>
+          <h2 id="doneMsg">+1 point</h2>
+          <button id="nextBtn" class="btn-main">Watch another</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="dash-id">Your device ID: <code id="userId">—</code></p>
+
+  </main>
+
+  <nav class="bottomnav">
+    <a href="#top" class="nav-item active"><span class="nav-icon">⌂</span>Home</a>
+    <a href="#adSection" class="nav-item" id="navWatch"><span class="nav-icon">▶</span>Watch</a>
+    <a href="#statsTop" class="nav-item"><span class="nav-icon">◆</span>Stats</a>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
