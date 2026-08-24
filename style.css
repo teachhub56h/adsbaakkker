@@ -176,41 +176,6 @@ html, body {
 .btn-main:active { transform: translateY(0); }
 .btn-main:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
 
-.ad-playing { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 22px; }
-.ad-placeholder {
-  width: 100%;
-  border: 1px dashed var(--line);
-  border-radius: 10px;
-  padding: 30px 16px;
-  background: var(--surface-2);
-}
-.ad-placeholder-label { margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 2px; color: var(--teal); }
-.ad-placeholder-note { margin: 8px 0 0; font-size: 12px; color: var(--text-dim); }
-
-.timer-ring-wrap { position: relative; width: 64px; height: 64px; }
-.timer-ring { width: 64px; height: 64px; transform: rotate(-90deg); }
-.ring-bg { fill: none; stroke: var(--line); stroke-width: 4; }
-.ring-fg {
-  fill: none;
-  stroke: var(--amber);
-  stroke-width: 4;
-  stroke-linecap: round;
-  stroke-dasharray: 175.9;
-  stroke-dashoffset: 0;
-  transition: stroke-dashoffset 1s linear;
-}
-.timer-num {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--text);
-}
-
 /* Dashboard */
 .dashboard { margin-top: 44px; }
 .dash-title {
