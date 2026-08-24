@@ -1,6 +1,3 @@
-// ---------- Config ----------
-const AD_DURATION_SECONDS = 15; // how long a "watch" takes before it counts
-
 // ---------- Identity (per-device, no login) ----------
 function getOrCreateUserId() {
   let id = localStorage.getItem('adtally_uid');
@@ -96,36 +93,16 @@ function showToast(msg) {
 }
 
 // ---------- Ad flow ----------
-const RING_CIRCUMFERENCE = 175.9;
-
 function startAdFlow(data) {
   document.getElementById('adSection').hidden = false;
-  document.getElementById('adDone').hidden = true;
-  document.getElementById('adPlaying').hidden = false;
   document.getElementById('adSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-  let remaining = AD_DURATION_SECONDS;
-  const timerNum = document.getElementById('timerNum');
-  const ringFg = document.getElementById('ringFg');
-  timerNum.textContent = remaining;
-  ringFg.style.strokeDashoffset = 0;
-
-  const interval = setInterval(() => {
-    remaining -= 1;
-    timerNum.textContent = Math.max(remaining, 0);
-    const progress = 1 - remaining / AD_DURATION_SECONDS;
-    ringFg.style.strokeDashoffset = RING_CIRCUMFERENCE * progress;
-
-    if (remaining <= 0) {
-      clearInterval(interval);
-      data = recordAdWatch(data);
-      renderDashboard(data);
-      document.getElementById('doneMsg').textContent = `+1 point — ${data.total} total`;
-      document.getElementById('adPlaying').hidden = true;
-      document.getElementById('adDone').hidden = false;
-      showToast('Point added — no limit, watch another anytime');
-    }
-  }, 1000);
+  // Popunder network fires on its own via the click that triggered this.
+  // No wait time needed — award the point immediately, unlimited repeats.
+  data = recordAdWatch(data);
+  renderDashboard(data);
+  document.getElementById('doneMsg').textContent = `+1 point — ${data.total} total`;
+  showToast('Point added — no limit, watch another anytime');
 }
 
 // ---------- Share ----------
