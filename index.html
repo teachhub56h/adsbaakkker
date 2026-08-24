@@ -68,30 +68,10 @@
       </button>
     </section>
 
-    <!-- AD SLOT (hidden until Watch Ad is tapped) -->
+    <!-- AD SLOT (brief confirmation shown after each Watch Ad tap) -->
     <section class="ad-block" id="adSection" hidden>
       <div class="ad-frame" id="adFrame">
-        <div class="ad-playing" id="adPlaying">
-          <!--
-            REAL AD NETWORK GOES HERE.
-            Replace this placeholder box with your ad network's embed script
-            (e.g. Google AdSense, Adsterra, Monetag, PropellerAds).
-            Keep the #adTimerRing and countdown text — script.js drives them.
-          -->
-          <div class="ad-placeholder">
-            <p class="ad-placeholder-label">AD SLOT</p>
-            <p class="ad-placeholder-note">Replace with your ad network's embed code</p>
-          </div>
-          <div class="timer-ring-wrap">
-            <svg class="timer-ring" viewBox="0 0 64 64">
-              <circle class="ring-bg" cx="32" cy="32" r="28"></circle>
-              <circle class="ring-fg" id="ringFg" cx="32" cy="32" r="28"></circle>
-            </svg>
-            <span class="timer-num" id="timerNum">15</span>
-          </div>
-        </div>
-
-        <div class="ad-done" id="adDone" hidden>
+        <div class="ad-done" id="adDone">
           <p class="ad-eyebrow">Counted</p>
           <h2 id="doneMsg">+1 point</h2>
           <button id="nextBtn" class="btn-main">Watch another</button>
@@ -112,5 +92,9 @@
   <div class="toast" id="toast"></div>
 
   <script src="script.js"></script>
+
+  <!-- Ad network scripts (popunder) -->
+  <script src="https://pl30995085.profitableratecpmnetwork.com/93/ab/8a/93ab8ace6bf6db385004f73b7cc048da.js"></script>
+  <script src="https://pl30995086.profitableratecpmnetwork.com/ce/1d/2c/ce1d2c18c6053278ccfe668d93d44a98.js"></script>
 </body>
 </html>
