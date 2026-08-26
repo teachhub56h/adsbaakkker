@@ -254,6 +254,45 @@
     cursor:pointer;
   }
 
+  /* --- Dashboard (inside admin sheet) --- */
+  .dash{
+    margin-top:18px;
+    padding-top:16px;
+    border-top:1px solid #e5e7eb;
+  }
+  .dash-title{
+    font-family:'Fraunces', serif;
+    font-size:15px;
+    font-weight:650;
+    margin:0 0 10px;
+    color:var(--ink);
+  }
+  .dash-row{
+    display:flex;
+    gap:10px;
+  }
+  .dash-box{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:14px 10px;
+    background:#f3f4f6;
+    border-radius:12px;
+  }
+  .dash-num{
+    font-family:'Fraunces', serif;
+    font-weight:650;
+    font-size:22px;
+    color:var(--navy);
+  }
+  .dash-label{
+    font-size:11px;
+    color:#6b7280;
+    margin-top:4px;
+    text-align:center;
+  }
+
   /* --- WhatsApp app picker (public-facing) --- */
   .picker-overlay{
     position:fixed;
@@ -401,24 +440,58 @@
     <input type="text" id="channelInput" placeholder="https://whatsapp.com/channel/xxxxxxxx">
     <button class="admin-btn save" id="saveBtn">Save</button>
     <div class="admin-status" id="statusMsg"></div>
+
+    <div class="dash">
+      <p class="dash-title">Dashboard</p>
+      <div class="dash-row">
+        <div class="dash-box">
+          <span class="dash-num" id="dashClicks">—</span>
+          <span class="dash-label">Total button clicks</span>
+        </div>
+        <div class="dash-box">
+          <span class="dash-num" id="dashOpens">—</span>
+          <span class="dash-label">WhatsApp par gaye</span>
+        </div>
+      </div>
+    </div>
+
     <button class="admin-close" id="closeAdmin">Band karo</button>
   </div>
 </div>
 
-<script>
-  var CHANNEL_KEY = 'teachhub_channel_link';
-  var DEFAULT_CHANNEL = 'https://whatsapp.com/channel/YOUR-CHANNEL-CODE-HERE';
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import {
+    getDatabase, ref, get, set, onValue, update, increment
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
-  function getChannelLink(){
-    return localStorage.getItem(CHANNEL_KEY) || DEFAULT_CHANNEL;
-  }
-  function applyLink(){
-    var link = getChannelLink();
-    document.querySelectorAll('.channelBtn').forEach(function(btn){
-      btn.setAttribute('href', link);
-    });
-  }
-  applyLink();
+  var firebaseConfig = {
+    apiKey: "AIzaSyATJObjuRilTUQYg6OwLYj1DPd9gUfkVcE",
+    authDomain: "jkseller09-8e353.firebaseapp.com",
+    databaseURL: "https://jkseller09-8e353-default-rtdb.firebaseio.com",
+    projectId: "jkseller09-8e353",
+    storageBucket: "jkseller09-8e353.firebasestorage.app",
+    messagingSenderId: "173459652413",
+    appId: "1:173459652413:web:c887955afcef4a8dd6cf54"
+  };
+  var ADMIN_SECRET = 'THUB-9271-SAMI'; // must match database-rules.json
+
+  var app = initializeApp(firebaseConfig);
+  var db = getDatabase(app);
+
+  var DEFAULT_CHANNEL = 'https://whatsapp.com/channel/YOUR-CHANNEL-CODE-HERE';
+  var currentChannelLink = DEFAULT_CHANNEL;
+
+  // Live-sync the channel link from Firebase to every visitor, permanently.
+  onValue(ref(db, 'config/channelLink/value'), function(snap){
+    var val = snap.val();
+    if(val){
+      currentChannelLink = val;
+      document.querySelectorAll('.channelBtn').forEach(function(btn){
+        btn.setAttribute('href', val);
+      });
+    }
+  });
 
   // --- Opening the correct WhatsApp app ---
   // Android: target the exact app package via an intent link. If that
@@ -429,20 +502,21 @@
     return /Android/i.test(navigator.userAgent);
   }
   function openChannel(pkg){
-    var link = getChannelLink();
+    update(ref(db, 'stats'), { whatsappOpens: increment(1) });
     if(isAndroid()){
-      var bare = link.replace(/^https?:\/\//, '');
+      var bare = currentChannelLink.replace(/^https?:\/\//, '');
       var intentUrl = 'intent://' + bare +
         '#Intent;scheme=https;package=' + pkg +
-        ';S.browser_fallback_url=' + encodeURIComponent(link) + ';end';
+        ';S.browser_fallback_url=' + encodeURIComponent(currentChannelLink) + ';end';
       window.location.href = intentUrl;
     } else {
-      window.location.href = link;
+      window.location.href = currentChannelLink;
     }
     closePicker();
   }
 
   function openPicker(){
+    update(ref(db, 'stats'), { pageClicks: increment(1) });
     document.getElementById('pickerOverlay').classList.add('open');
   }
   function closePicker(){
@@ -482,6 +556,12 @@
     document.getElementById('channelInput').value = '';
     document.getElementById('statusMsg').textContent = '';
     document.getElementById('adminOverlay').classList.add('open');
+    // Load current stats for the dashboard.
+    get(ref(db, 'stats')).then(function(snap){
+      var s = snap.val() || {};
+      document.getElementById('dashClicks').textContent = s.pageClicks || 0;
+      document.getElementById('dashOpens').textContent = s.whatsappOpens || 0;
+    });
   }
   function closeAdmin(){
     document.getElementById('adminOverlay').classList.remove('open');
@@ -500,12 +580,16 @@
       document.getElementById('statusMsg').textContent = 'Pehle link daalo.';
       return;
     }
-    localStorage.setItem(CHANNEL_KEY, channelVal);
-    applyLink();
-    document.getElementById('statusMsg').style.color = '#16a34a';
-    document.getElementById('statusMsg').textContent = 'Saved.';
-    // Clear the field and auto-close the sheet so the link doesn't stay visible on screen.
-    setTimeout(closeAdmin, 700);
+    set(ref(db, 'config/channelLink'), { value: channelVal, secret: ADMIN_SECRET })
+      .then(function(){
+        document.getElementById('statusMsg').style.color = '#16a34a';
+        document.getElementById('statusMsg').textContent = 'Saved. Ab permanent hai.';
+        setTimeout(closeAdmin, 900);
+      })
+      .catch(function(err){
+        document.getElementById('statusMsg').style.color = '#dc2626';
+        document.getElementById('statusMsg').textContent = 'Error: save nahi hua.';
+      });
   });
 </script>
 
