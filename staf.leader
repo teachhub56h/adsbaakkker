@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ur-Latn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #f3eedf;
+    --paper-2: #ece4cf;
+    --green: #1f4b3f;
+    --green-dark: #163731;
+    --ink: #2b2a28;
+    --ink-soft: #6b6558;
+    --gold: #b98b4e;
+    --rust: #a6452f;
+    --line: rgba(31,75,63,0.16);
+    --card: #fbf8ef;
+  }
+  * { box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px);
+    background-size: 100% 42px;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+  h1,h2,h3, .slab { font-family: 'Zilla Slab', serif; }
+
+  header{
+    background: var(--green);
+    color: var(--paper);
+    padding: 22px 18px 26px;
+    border-bottom: 4px solid var(--gold);
+  }
+  header h1{
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  header p{
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    color: #cfe0d8;
+  }
+
+  .wrap{ max-width: 520px; margin: 0 auto; padding: 0 14px; }
+
+  .toolbar{
+    display:flex; justify-content: space-between; align-items:center;
+    margin: 18px 0 10px;
+  }
+  .toolbar .count{ font-size: 0.85rem; color: var(--ink-soft); }
+
+  button{
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-primary{
+    background: var(--gold);
+    color: #2b2000;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.92rem;
+  }
+  .btn-primary:active{ transform: translateY(1px); }
+  .btn-ghost{
+    background: transparent;
+    color: var(--green);
+    font-weight: 600;
+    padding: 6px 4px;
+    font-size: 0.92rem;
+  }
+  .btn-text{
+    background:none; color: var(--ink-soft); font-size: 0.85rem; text-decoration: underline;
+    padding: 4px;
+  }
+
+  /* Staff list */
+  .staff-row{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--green);
+    border-radius: 4px;
+    padding: 14px 14px;
+    margin-bottom: 10px;
+    display:flex; justify-content: space-between; align-items: center;
+    gap: 10px;
+  }
+  .staff-row .info .name{ font-family:'Zilla Slab', serif; font-weight:600; font-size: 1.08rem; }
+  .staff-row .info .meta{ font-size: 0.8rem; color: var(--ink-soft); margin-top: 2px; }
+  .staff-row .month-total{ text-align: right; }
+  .staff-row .month-total .amt{ font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .staff-row .month-total .lbl{ font-size: 0.7rem; color: var(--ink-soft); }
+
+  .empty{
+    text-align:center; padding: 40px 20px; color: var(--ink-soft);
+  }
+  .empty .slab{ font-size: 1.1rem; color: var(--ink); display:block; margin-bottom: 6px;}
+
+  /* Add staff form */
+  .form-card{
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .form-card h3{ margin: 0 0 12px; font-size: 1.05rem; }
+  .field{ margin-bottom: 10px; }
+  .field label{ display:block; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 4px; }
+  .field input, .field select{
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 5px;
+    border: 1px solid #d8cfb4;
+    background: #fff;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+  }
+  .field input:focus, .field select:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
+  .form-actions{ display:flex; gap:10px; margin-top: 12px; }
+
+  /* Detail view */
+  .detail-header{
+    display:flex; align-items:center; gap: 10px; margin: 16px 0 14px;
+  }
+  .back-btn{
+    background:none; color: var(--paper); font-weight:600; font-size: 0.9rem;
+  }
+  .staff-title{ margin: 4px 0 2px; font-size: 1.4rem; }
+  .staff-meta-list{ font-size: 0.82rem; color: #d9e6df; line-height:1.5; margin-top: 2px;}
+
+  .ledger-box{
+    background: var(--card);
+    border: 2px double var(--green);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+    margin: 14px 0;
+  }
+  .ledger-box .lbl{ font-size: 0.75rem; color: var(--ink-soft); letter-spacing: 0.3px; }
+  .ledger-box .amt{
+    font-family:'Zilla Slab', serif;
+    font-weight: 700;
+    font-size: 2rem;
+    color: var(--green-dark);
+    margin: 4px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .ledger-box .days{ font-size: 0.78rem; color: var(--ink-soft); }
+
+  .month-select-row{ margin: 12px 0; }
+
+  .entry-row{
+    display:flex; justify-content: space-between; align-items:center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .entry-row .when .d{ font-weight:600; font-size: 0.92rem; }
+  .entry-row .when .t{ font-size: 0.75rem; color: var(--ink-soft); }
+  .entry-row .amt-del{ display:flex; align-items:center; gap: 10px; }
+  .entry-row .amt{ font-weight: 700; font-variant-numeric: tabular-nums; }
+  .del-x{
+    background:none; color: var(--rust); font-size: 1.1rem; line-height:1; padding: 2px 4px;
+  }
+
+  .section-title{
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--ink-soft); margin: 18px 0 8px;
+  }
+
+  .danger-link{
+    color: var(--rust); background:none; font-size: 0.82rem; margin-top: 18px; text-decoration: underline;
+  }
+
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<header id="topHeader">
+  <div class="wrap">
+    <div id="listHeaderContent">
+      <h1>Staff Ledger</h1>
+      <p>Har member ki daily salary ka record</p>
+    </div>
+    <div id="detailHeaderContent" class="hidden">
+      <button class="back-btn" onclick="showList()">&larr; Staff List</button>
+      <h1 class="staff-title" id="detailName"></h1>
+      <div class="staff-meta-list" id="detailMeta"></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- LIST VIEW -->
+  <div id="listView">
+    <div class="toolbar">
+      <span class="count" id="staffCount">0 members</span>
+      <button class="btn-primary" onclick="toggleAddForm()">+ Add Staff</button>
+    </div>
+
+    <div class="form-card hidden" id="addStaffForm">
+      <h3>New Staff Member</h3>
+      <div class="field">
+        <label>Name *</label>
+        <input type="text" id="newName" placeholder="Member ka naam">
+      </div>
+      <div class="field">
+        <label>Account (optional)</label>
+        <input type="text" id="newAccount" placeholder="Account number">
+      </div>
+      <div class="field">
+        <label>Phone Number (optional)</label>
+        <input type="text" id="newPhone" placeholder="Phone number">
+      </div>
+      <div class="field">
+        <label>Wallet (optional)</label>
+        <input type="text" id="newWallet" placeholder="e.g. Easypaisa / JazzCash">
+      </div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="saveNewStaff()">Save</button>
+        <button class="btn-text" onclick="toggleAddForm()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="staffListContainer"></div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div id="detailView" class="hidden">
+
+    <div class="form-card">
+      <h3>Add Today's Salary</h3>
+      <div class="field">
+        <label>Amount</label>
+        <input type="number" id="entryAmount" placeholder="e.g. 1500" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="entryDate">
+      </div>
+      <button class="btn-primary" onclick="addEntry()">Add Salary</button>
+    </div>
+
+    <div class="month-select-row">
+      <div class="field">
+        <label>Viewing Month</label>
+        <select id="monthSelect" onchange="renderDetailForMonth()"></select>
+      </div>
+    </div>
+
+    <div class="ledger-box">
+      <div class="lbl">Total Salary Paid</div>
+      <div class="amt" id="monthTotal">Rs 0</div>
+      <div class="days" id="monthDaysInfo">0 entries</div>
+    </div>
+
+    <div class="section-title">Entries</div>
+    <div id="entriesContainer"></div>
+
+    <button class="danger-link" onclick="deleteCurrentStaff()">Remove this staff member</button>
+  </div>
+
+</div>
+
+<script>
+let staffList = [];
+let currentStaffId = null;
+let currentEntries = [];
+
+async function loadStaffList(){
+  try{
+    const res = await window.storage.get('staff-list', false);
+    staffList = res ? JSON.parse(res.value) : [];
+  }catch(e){ staffList = []; }
+}
+async function saveStaffList(){
+  try{ await window.storage.set('staff-list', JSON.stringify(staffList), false); }
+  catch(e){ console.error('save staff list failed', e); }
+}
+async function loadEntries(staffId){
+  try{
+    const res = await window.storage.get('entries-' + staffId, false);
+    return res ? JSON.parse(res.value) : [];
+  }catch(e){ return []; }
+}
+async function saveEntries(staffId, entries){
+  try{ await window.storage.set('entries-' + staffId, JSON.stringify(entries), false); }
+  catch(e){ console.error('save entries failed', e); }
+}
+
+function todayISO(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function nowTimeStr(){
+  const d = new Date();
+  return d.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
+}
+function currentMonthKey(){ return todayISO().slice(0,7); }
+function fmtMoney(n){ return 'Rs ' + Number(n).toLocaleString('en-PK'); }
+function fmtDateShort(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', {day:'numeric', month:'short'});
+}
+function monthLabel(key){
+  const [y,m] = key.split('-');
+  const d = new Date(Number(y), Number(m)-1, 1);
+  return d.toLocaleDateString('en-US', {month:'long', year:'numeric'});
+}
+
+async function monthTotalFor(staffId, monthKey){
+  const entries = await loadEntries(staffId);
+  return entries.filter(e => e.date.slice(0,7) === monthKey)
+                .reduce((s,e) => s + Number(e.amount), 0);
+}
+
+async function renderStaffListView(){
+  const container = document.getElementById('staffListContainer');
+  document.getElementById('staffCount').textContent = staffList.length + (staffList.length===1 ? ' member' : ' members');
+  if(staffList.length === 0){
+    container.innerHTML = '<div class="empty"><span class="slab">Koi staff nahi hai abhi</span>Upar se "Add Staff" dabayein pehla member add karne ke liye.</div>';
+    return;
+  }
+  const mk = currentMonthKey();
+  let html = '';
+  for(const s of staffList){
+    const total = await monthTotalFor(s.id, mk);
+    html += `<div class="staff-row" onclick="openStaff('${s.id}')">
+      <div class="info">
+        <div class="name">${escapeHtml(s.name)}</div>
+        <div class="meta">${s.phone ? escapeHtml(s.phone) : (s.account ? escapeHtml(s.account) : 'No contact info')}</div>
+      </div>
+      <div class="month-total">
+        <div class="amt">${fmtMoney(total)}</div>
+        <div class="lbl">this month</div>
+      </div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+function toggleAddForm(){
+  document.getElementById('addStaffForm').classList.toggle('hidden');
+}
+
+async function saveNewStaff(){
+  const name = document.getElementById('newName').value.trim();
+  if(!name){ alert('Naam likhna zaroori hai'); return; }
+  const staff = {
+    id: 'st_' + Date.now(),
+    name: name,
+    account: document.getElementById('newAccount').value.trim(),
+    phone: document.getElementById('newPhone').value.trim(),
+    wallet: document.getElementById('newWallet').value.trim()
+  };
+  staffList.push(staff);
+  await saveStaffList();
+  document.getElementById('newName').value = '';
+  document.getElementById('newAccount').value = '';
+  document.getElementById('newPhone').value = '';
+  document.getElementById('newWallet').value = '';
+  document.getElementById('addStaffForm').classList.add('hidden');
+  await renderStaffListView();
+}
+
+function showList(){
+  currentStaffId = null;
+  document.getElementById('listView').classList.remove('hidden');
+  document.getElementById('detailView').classList.add('hidden');
+  document.getElementById('listHeaderContent').classList.remove('hidden');
+  document.getElementById('detailHeaderContent').classList.add('hidden');
+  renderStaffListView();
+}
+
+async function openStaff(id){
+  currentStaffId = id;
+  const staff = staffList.find(s => s.id === id);
+  if(!staff) return;
+
+  document.getElementById('listView').classList.add('hidden');
+  document.getElementById('detailView').classList.remove('hidden');
+  document.getElementById('listHeaderContent').classList.add('hidden');
+  document.getElementById('detailHeaderContent').classList.remove('hidden');
+
+  document.getElementById('detailName').textContent = staff.name;
+  const metaBits = [];
+  if(staff.phone) metaBits.push('Phone: ' + staff.phone);
+  if(staff.account) metaBits.push('Account: ' + staff.account);
+  if(staff.wallet) metaBits.push('Wallet: ' + staff.wallet);
+  document.getElementById('detailMeta').textContent = metaBits.join(' · ');
+
+  document.getElementById('entryDate').value = todayISO();
+
+  currentEntries = await loadEntries(id);
+  populateMonthSelect();
+  renderDetailForMonth();
+}
+
+function populateMonthSelect(){
+  const sel = document.getElementById('monthSelect');
+  const months = new Set(currentEntries.map(e => e.date.slice(0,7)));
+  months.add(currentMonthKey());
+  const sorted = Array.from(months).sort().reverse();
+  sel.innerHTML = sorted.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
+  sel.value = currentMonthKey();
+}
+
+function renderDetailForMonth(){
+  const monthKey = document.getElementById('monthSelect').value;
+  const filtered = currentEntries.filter(e => e.date.slice(0,7) === monthKey)
+                                  .sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
+  const total = filtered.reduce((s,e) => s + Number(e.amount), 0);
+  document.getElementById('monthTotal').textContent = fmtMoney(total);
+  document.getElementById('monthDaysInfo').textContent = filtered.length + (filtered.length===1 ? ' entry' : ' entries');
+
+  const container = document.getElementById('entriesContainer');
+  if(filtered.length === 0){
+    container.innerHTML = '<div class="empty">Is month ka koi record nahi hai.</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(e => `
+    <div class="entry-row">
+      <div class="when">
+        <div class="d">${fmtDateShort(e.date)}</div>
+        <div class="t">${e.time}</div>
+      </div>
+      <div class="amt-del">
+        <div class="amt">${fmtMoney(e.amount)}</div>
+        <button class="del-x" onclick="deleteEntry('${e.id}')">&times;</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function addEntry(){
+  const amountVal = document.getElementById('entryAmount').value;
+  const dateVal = document.getElementById('entryDate').value || todayISO();
+  const amount = parseFloat(amountVal);
+  if(!amount || amount <= 0){ alert('Sahi amount likhein'); return; }
+
+  const entry = {
+    id: 'en_' + Date.now(),
+    date: dateVal,
+    time: nowTimeStr(),
+    amount: amount
+  };
+  currentEntries.push(entry);
+  await saveEntries(currentStaffId, currentEntries);
+  document.getElementById('entryAmount').value = '';
+  populateMonthSelect();
+  document.getElementById('monthSelect').value = dateVal.slice(0,7);
+  renderDetailForMonth();
+}
+
+async function deleteEntry(entryId){
+  if(!confirm('Ye entry delete karni hai?')) return;
+  currentEntries = currentEntries.filter(e => e.id !== entryId);
+  await saveEntries(currentStaffId, currentEntries);
+  populateMonthSelect();
+  renderDetailForMonth();
+}
+
+async function deleteCurrentStaff(){
+  const staff = staffList.find(s => s.id === currentStaffId);
+  if(!staff) return;
+  if(!confirm(`"${staff.name}" ko aur unka sara salary record delete karna hai? Ye wapis nahi hoga.`)) return;
+  staffList = staffList.filter(s => s.id !== currentStaffId);
+  await saveStaffList();
+  try{ await window.storage.delete('entries-' + currentStaffId, false); }catch(e){}
+  showList();
+}
+
+async function init(){
+  await loadStaffList();
+  await renderStaffListView();
+}
+init();
+</script>
+
+</body>
+</html>
