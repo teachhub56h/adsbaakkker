@@ -5,195 +5,193 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Staff Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   :root{
-    --paper: #f3eedf;
-    --paper-2: #ece4cf;
-    --green: #1f4b3f;
-    --green-dark: #163731;
-    --ink: #2b2a28;
-    --ink-soft: #6b6558;
-    --gold: #b98b4e;
-    --rust: #a6452f;
-    --line: rgba(31,75,63,0.16);
-    --card: #fbf8ef;
+    --navy: #102a4c;
+    --navy-2: #1a3f70;
+    --cream: #f7f0e2;
+    --card: #ffffff;
+    --card-border: #ece2ca;
+    --text-dark: #16233a;
+    --text-gray: #8a8171;
+    --text-faint: #a89f8d;
+    --gold: #e9c877;
+    --green-bg: #ddf3e4;
+    --green-text: #1c8a4b;
+    --red-bg: #fbe1de;
+    --red-text: #c23b2a;
+    --shadow: 0 6px 20px rgba(16,42,76,0.08);
   }
-  * { box-sizing: border-box; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
   html,body{ margin:0; padding:0; }
   body{
-    background: var(--paper);
-    background-image:
-      linear-gradient(var(--line) 1px, transparent 1px);
-    background-size: 100% 42px;
-    color: var(--ink);
-    font-family: 'Inter', sans-serif;
+    background: var(--cream);
+    color: var(--text-dark);
+    font-family: 'Manrope', sans-serif;
     min-height: 100vh;
-    padding-bottom: 40px;
+    padding-bottom: 90px;
   }
-  h1,h2,h3, .slab { font-family: 'Zilla Slab', serif; }
+  h1,h2,h3, .display { font-family: 'Poppins', sans-serif; }
 
   header{
-    background: var(--green);
-    color: var(--paper);
-    padding: 22px 18px 26px;
-    border-bottom: 4px solid var(--gold);
+    background: linear-gradient(135deg, var(--navy-2), var(--navy));
+    color: #fff;
+    padding: 28px 18px 24px;
+    border-radius: 0 0 26px 26px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  header::before{
+    content:'';
+    position:absolute; right:-40px; top:-60px; width:220px; height:220px;
+    border-radius:50%; border: 1px solid rgba(255,255,255,0.08);
   }
   header h1{
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: 0.2px;
+    margin: 0; font-size: 1.55rem; font-weight: 700; display:flex; align-items:center; gap:8px;
   }
-  header p{
-    margin: 4px 0 0;
-    font-size: 0.85rem;
-    color: #cfe0d8;
-  }
+  header p.subtitle{ margin: 4px 0 0; font-size: 0.85rem; color: var(--gold); font-weight:600; }
 
-  .wrap{ max-width: 520px; margin: 0 auto; padding: 0 14px; }
+  .stat-row{ display:flex; gap: 10px; margin-top: 18px; }
+  .stat-box{
+    flex:1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .stat-box .num{ font-family:'Poppins',sans-serif; font-weight:700; font-size: 1.25rem; color: var(--gold); }
+  .stat-box .lbl{ font-size: 0.68rem; letter-spacing:0.05em; text-transform:uppercase; color: #cfdcee; margin-top:2px; }
 
-  .toolbar{
-    display:flex; justify-content: space-between; align-items:center;
-    margin: 18px 0 10px;
-  }
-  .toolbar .count{ font-size: 0.85rem; color: var(--ink-soft); }
+  .wrap{ max-width: 520px; margin: 0 auto; padding: 0 16px; }
 
-  button{
-    font-family: 'Inter', sans-serif;
-    cursor: pointer;
-    border: none;
-  }
-  .btn-primary{
-    background: var(--gold);
-    color: #2b2000;
-    font-weight: 600;
-    padding: 10px 16px;
-    border-radius: 6px;
-    font-size: 0.92rem;
-  }
-  .btn-primary:disabled{ opacity: 0.6; }
-  .btn-primary:active{ transform: translateY(1px); }
-  .btn-ghost{
-    background: transparent;
-    color: var(--green);
-    font-weight: 600;
-    padding: 6px 4px;
-    font-size: 0.92rem;
-  }
-  .btn-text{
-    background:none; color: var(--ink-soft); font-size: 0.85rem; text-decoration: underline;
-    padding: 4px;
-  }
+  .status-bar{ font-size: 0.76rem; padding: 10px 0 2px; color: var(--text-faint); min-height: 18px; }
+  .status-bar.error{ color: #c23b2a; font-weight: 600; }
+  .status-bar.ok{ color: var(--green-text); }
 
-  .status-bar{
-    font-size: 0.78rem;
-    padding: 6px 0;
-    color: var(--ink-soft);
+  .search-box{ margin-top: 16px; }
+  .search-box input{
+    width:100%; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--card-border);
+    background: var(--card); font-size: 0.95rem; font-family:'Manrope',sans-serif; color: var(--text-dark);
+    box-shadow: var(--shadow);
   }
-  .status-bar.error{ color: var(--rust); font-weight: 600; }
-  .status-bar.ok{ color: var(--green-dark); }
+  .search-box input::placeholder{ color: var(--text-faint); }
+  .search-hint{ font-size: 0.72rem; color: var(--text-faint); margin: 6px 2px 14px; }
 
-  /* Staff list */
+  button{ font-family: 'Manrope', sans-serif; cursor: pointer; border: none; }
+
+  .btn-dark{
+    background: var(--navy); color: var(--gold); font-weight: 700;
+    padding: 15px 18px; border-radius: 16px; font-size: 0.95rem;
+    width: 100%; box-shadow: var(--shadow);
+  }
+  .btn-dark:disabled{ opacity: 0.55; }
+  .btn-green{ background: var(--green-text); color:#fff; font-weight:700; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; }
+  .btn-red{ background: var(--red-text); color:#fff; font-weight:700; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; }
+  .btn-outline-green{ background: var(--green-bg); color: var(--green-text); font-weight:700; padding: 14px 10px; border-radius: 14px; font-size: 0.95rem; flex:1; }
+  .btn-outline-red{ background: var(--red-bg); color: var(--red-text); font-weight:700; padding: 14px 10px; border-radius: 14px; font-size: 0.95rem; flex:1; }
+  .btn-text{ background:none; color: var(--text-gray); font-size: 0.82rem; padding: 6px; text-decoration: underline; }
+
+  .fixed-bottom{
+    position: fixed; left:0; right:0; bottom:0; padding: 12px 16px calc(14px + env(safe-area-inset-bottom));
+    background: linear-gradient(0deg, var(--cream) 60%, rgba(247,240,226,0));
+  }
+  .fixed-bottom .wrap{ padding:0; }
+
+  .me-card{
+    background: linear-gradient(135deg, var(--navy-2), var(--navy));
+    border-radius: 16px; padding: 16px; margin: 16px 0 6px; color:#fff;
+    display:flex; align-items:center; gap:12px; box-shadow: var(--shadow);
+  }
+  .me-card .ico{ font-size: 1.5rem; }
+  .me-card .name{ font-weight:700; font-size: 1.02rem; }
+  .me-card .sub{ font-size: 0.76rem; color: var(--gold); margin-top:2px; }
+  .me-card .arrow{ margin-left:auto; font-size:1.2rem; color: var(--gold); }
+
+  .toolbar{ display:flex; justify-content: space-between; align-items:center; margin: 16px 0 14px; }
+  .toolbar .count{ font-size: 0.8rem; color: var(--text-gray); }
+  .toolbar .add-link{ background: var(--navy); color: var(--gold); font-weight:700; padding: 9px 14px; border-radius: 10px; font-size: 0.85rem; }
+
   .staff-row{
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-left: 4px solid var(--green);
-    border-radius: 4px;
-    padding: 14px 14px;
-    margin-bottom: 10px;
-    display:flex; justify-content: space-between; align-items: center;
-    gap: 10px;
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 16px;
+    padding: 15px 15px; margin-bottom: 10px; display:flex; align-items: center; gap: 12px;
+    box-shadow: var(--shadow); transition: transform 0.1s ease;
   }
-  .staff-row .info .name{ font-family:'Zilla Slab', serif; font-weight:600; font-size: 1.08rem; }
-  .staff-row .info .meta{ font-size: 0.8rem; color: var(--ink-soft); margin-top: 2px; }
-  .staff-row .month-total{ text-align: right; }
-  .staff-row .month-total .amt{ font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-  .staff-row .month-total .lbl{ font-size: 0.7rem; color: var(--ink-soft); }
-
-  .empty{
-    text-align:center; padding: 40px 20px; color: var(--ink-soft);
+  .staff-row:active{ transform: scale(0.99); }
+  .staff-row .info{ flex:1; min-width:0; }
+  .staff-row .info .name{ font-weight:700; font-size: 1.02rem; color: var(--text-dark); font-family:'Poppins',sans-serif; }
+  .staff-row .info .meta{ font-size: 0.8rem; color: var(--text-gray); margin-top: 3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .amount-pill{
+    background: var(--green-bg); color: var(--green-text); font-weight:700; font-size: 0.88rem;
+    padding: 7px 14px; border-radius: 20px; font-variant-numeric: tabular-nums; white-space:nowrap;
   }
-  .empty .slab{ font-size: 1.1rem; color: var(--ink); display:block; margin-bottom: 6px;}
 
-  /* Add staff form */
+  .empty{ text-align:center; padding: 50px 20px; color: var(--text-gray); }
+  .empty .display{ font-size: 1.1rem; color: var(--text-dark); display:block; margin-bottom: 6px; font-weight:600;}
+
   .form-card{
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 16px;
-    margin-bottom: 14px;
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 18px;
+    padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow);
   }
-  .form-card h3{ margin: 0 0 12px; font-size: 1.05rem; }
-  .field{ margin-bottom: 10px; }
-  .field label{ display:block; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 4px; }
-  .field input, .field select{
-    width: 100%;
-    padding: 9px 10px;
-    border-radius: 5px;
-    border: 1px solid #d8cfb4;
-    background: #fff;
-    font-size: 0.95rem;
-    font-family: 'Inter', sans-serif;
-    color: var(--ink);
+  .form-card h3{ margin: 0 0 14px; font-size: 1rem; font-weight: 700; color: var(--text-dark); }
+  .field{ margin-bottom: 12px; }
+  .field label{ display:block; font-size: 0.75rem; color: var(--text-gray); margin-bottom: 6px; }
+  .field .optional-tag{ color: var(--text-faint); font-weight:400; }
+  .field input, .field select, .field textarea{
+    width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--card-border);
+    background: #fdfbf6; font-size: 0.94rem; font-family: 'Manrope', sans-serif; color: var(--text-dark);
   }
-  .field input:focus, .field select:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
-  .form-actions{ display:flex; gap:10px; margin-top: 12px; align-items:center; }
+  .field textarea{ resize: vertical; min-height: 60px; }
+  .field input::placeholder, .field textarea::placeholder{ color: var(--text-faint); }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline: none; border-color: var(--navy-2); box-shadow: 0 0 0 3px rgba(26,63,112,0.1);
+  }
+  .form-actions{ display:flex; gap:12px; margin-top: 14px; align-items:center; }
 
-  /* Detail view */
-  .detail-header{
-    display:flex; align-items:center; gap: 10px; margin: 16px 0 14px;
-  }
   .back-btn{
-    background:none; color: var(--paper); font-weight:600; font-size: 0.9rem;
+    background:none; color: rgba(255,255,255,0.85); font-weight:600; font-size: 0.85rem;
+    display:flex; align-items:center; gap:6px; padding: 0 0 10px;
   }
-  .staff-title{ margin: 4px 0 2px; font-size: 1.4rem; }
-  .staff-meta-list{ font-size: 0.82rem; color: #d9e6df; line-height:1.5; margin-top: 2px;}
+  .staff-title{ margin: 2px 0 2px; font-size: 1.4rem; font-weight: 700; }
+  .staff-meta-list{ font-size: 0.8rem; color: #cfdcee; line-height:1.6; margin-top: 4px;}
 
   .ledger-box{
-    background: var(--card);
-    border: 2px double var(--green);
-    border-radius: 6px;
-    padding: 16px;
-    text-align: center;
-    margin: 14px 0;
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 18px;
+    padding: 20px 18px; text-align: center; margin: 16px 0; box-shadow: var(--shadow);
   }
-  .ledger-box .lbl{ font-size: 0.75rem; color: var(--ink-soft); letter-spacing: 0.3px; }
-  .ledger-box .amt{
-    font-family:'Zilla Slab', serif;
-    font-weight: 700;
-    font-size: 2rem;
-    color: var(--green-dark);
-    margin: 4px 0;
-    font-variant-numeric: tabular-nums;
-  }
-  .ledger-box .days{ font-size: 0.78rem; color: var(--ink-soft); }
+  .ledger-box .lbl{ font-size: 0.72rem; color: var(--text-gray); letter-spacing: 0.06em; text-transform: uppercase; }
+  .ledger-box .amt{ font-family:'Poppins', sans-serif; font-weight: 700; font-size: 2.1rem; color: var(--green-text); margin: 6px 0 2px; }
+  .ledger-box .days{ font-size: 0.78rem; color: var(--text-faint); }
 
-  .month-select-row{ margin: 12px 0; }
+  .split-summary{ display:flex; gap:10px; margin: 16px 0; }
+  .split-box{ flex:1; background: var(--card); border-radius: 16px; padding: 16px; text-align:center; box-shadow: var(--shadow); border: 1px solid var(--card-border); }
+  .split-box .lbl{ font-size: 0.7rem; text-transform:uppercase; letter-spacing:0.05em; color: var(--text-gray); }
+  .split-box .amt{ font-family:'Poppins',sans-serif; font-weight:700; font-size: 1.35rem; margin-top: 4px; }
+  .split-box.in .amt{ color: var(--green-text); }
+  .split-box.out .amt{ color: var(--red-text); }
+
+  .action-row{ display:flex; gap:10px; margin: 14px 0; }
+
+  .month-select-row{ margin: 14px 0; }
 
   .entry-row{
-    display:flex; justify-content: space-between; align-items:center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--line);
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 14px;
+    padding: 13px 14px; margin-bottom: 9px; display:flex; justify-content: space-between; align-items:flex-start;
+    box-shadow: var(--shadow);
   }
-  .entry-row .when .d{ font-weight:600; font-size: 0.92rem; }
-  .entry-row .when .t{ font-size: 0.75rem; color: var(--ink-soft); }
+  .entry-row .when .d{ font-weight:700; font-size: 0.9rem; color: var(--text-dark); }
+  .entry-row .when .t{ font-size: 0.74rem; color: var(--text-faint); margin-top: 1px; }
+  .entry-row .when .pay{ font-size: 0.75rem; color: var(--navy-2); margin-top: 4px; font-weight:600; }
+  .entry-row .when .note{ font-size: 0.78rem; color: var(--text-gray); margin-top: 4px; max-width: 200px; }
   .entry-row .amt-del{ display:flex; align-items:center; gap: 10px; }
   .entry-row .amt{ font-weight: 700; font-variant-numeric: tabular-nums; }
-  .del-x{
-    background:none; color: var(--rust); font-size: 1.1rem; line-height:1; padding: 2px 4px;
-  }
+  .entry-row .amt.in{ color: var(--green-text); }
+  .entry-row .amt.out{ color: var(--red-text); }
+  .del-x{ background: #f2ece0; color: var(--text-gray); font-size: 0.95rem; line-height:1; padding: 5px 9px; border-radius: 8px; }
 
-  .section-title{
-    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--ink-soft); margin: 18px 0 8px;
-  }
+  .section-title{ font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-gray); margin: 20px 0 10px; font-weight: 700; }
 
-  .danger-link{
-    color: var(--rust); background:none; font-size: 0.82rem; margin-top: 18px; text-decoration: underline;
-  }
+  .danger-link{ color: var(--red-text); background:none; font-size: 0.82rem; margin-top: 22px; text-decoration:underline; }
 
   .hidden{ display:none !important; }
 </style>
@@ -203,13 +201,22 @@
 <header id="topHeader">
   <div class="wrap">
     <div id="listHeaderContent">
-      <h1>Staff Ledger</h1>
-      <p>Har member ki daily salary ka record</p>
+      <h1>🎓 Staff Ledger</h1>
+      <p class="subtitle">Salary Records, Perfectly Kept</p>
+      <div class="stat-row">
+        <div class="stat-box"><div class="num" id="statStaffCount">0</div><div class="lbl">Staff</div></div>
+        <div class="stat-box"><div class="num" id="statMonthTotal">Rs 0</div><div class="lbl">Paid This Month</div></div>
+      </div>
     </div>
     <div id="detailHeaderContent" class="hidden">
       <button class="back-btn" onclick="showList()">&larr; Staff List</button>
       <h1 class="staff-title" id="detailName"></h1>
       <div class="staff-meta-list" id="detailMeta"></div>
+    </div>
+    <div id="meHeaderContent" class="hidden">
+      <button class="back-btn" onclick="showList()">&larr; Staff List</button>
+      <h1>💰 ME</h1>
+      <p class="subtitle">Your Personal Cash Book</p>
     </div>
   </div>
 </header>
@@ -220,31 +227,33 @@
 
   <!-- LIST VIEW -->
   <div id="listView">
+
+    <div class="me-card" onclick="showMe()">
+      <div class="ico">💰</div>
+      <div>
+        <div class="name">ME — Cash Book</div>
+        <div class="sub">Apni personal income & expense track karo</div>
+      </div>
+      <div class="arrow">›</div>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search by name or number..." oninput="renderStaffListView()">
+    </div>
+    <div class="search-hint">Type any 2–3 letters or digits — matches name, phone, or account</div>
+
     <div class="toolbar">
       <span class="count" id="staffCount">0 members</span>
-      <button class="btn-primary" onclick="toggleAddForm()">+ Add Staff</button>
     </div>
 
     <div class="form-card hidden" id="addStaffForm">
       <h3>New Staff Member</h3>
-      <div class="field">
-        <label>Name *</label>
-        <input type="text" id="newName" placeholder="Member ka naam">
-      </div>
-      <div class="field">
-        <label>Account (optional)</label>
-        <input type="text" id="newAccount" placeholder="Account number">
-      </div>
-      <div class="field">
-        <label>Phone Number (optional)</label>
-        <input type="text" id="newPhone" placeholder="Phone number">
-      </div>
-      <div class="field">
-        <label>Wallet (optional)</label>
-        <input type="text" id="newWallet" placeholder="e.g. Easypaisa / JazzCash">
-      </div>
+      <div class="field"><label>Name *</label><input type="text" id="newName" placeholder="Member ka naam"></div>
+      <div class="field"><label>Account <span class="optional-tag">(optional)</span></label><input type="text" id="newAccount" placeholder="Account number"></div>
+      <div class="field"><label>Phone Number <span class="optional-tag">(optional)</span></label><input type="text" id="newPhone" placeholder="Phone number"></div>
+      <div class="field"><label>Wallet <span class="optional-tag">(optional)</span></label><input type="text" id="newWallet" placeholder="e.g. Easypaisa / JazzCash"></div>
       <div class="form-actions">
-        <button class="btn-primary" onclick="saveNewStaff()" id="saveStaffBtn">Save</button>
+        <button class="btn-green" onclick="saveNewStaff()" id="saveStaffBtn">Save</button>
         <button class="btn-text" onclick="toggleAddForm()">Cancel</button>
       </div>
     </div>
@@ -252,27 +261,30 @@
     <div id="staffListContainer"></div>
   </div>
 
-  <!-- DETAIL VIEW -->
+  <!-- STAFF DETAIL VIEW -->
   <div id="detailView" class="hidden">
 
     <div class="form-card">
       <h3>Add Today's Salary</h3>
+      <div class="field"><label>Amount</label><input type="number" id="entryAmount" placeholder="e.g. 1500" inputmode="decimal"></div>
+      <div class="field"><label>Date</label><input type="date" id="entryDate"></div>
       <div class="field">
-        <label>Amount</label>
-        <input type="number" id="entryAmount" placeholder="e.g. 1500" inputmode="decimal">
+        <label>Payment Method <span class="optional-tag">(optional)</span></label>
+        <select id="entryMethod">
+          <option value="">Select — not required</option>
+          <option value="Cash">Cash</option>
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="JazzCash">JazzCash</option>
+          <option value="Easypaisa">Easypaisa</option>
+          <option value="Other">Other</option>
+        </select>
       </div>
-      <div class="field">
-        <label>Date</label>
-        <input type="date" id="entryDate">
-      </div>
-      <button class="btn-primary" onclick="addEntry()" id="addEntryBtn">Add Salary</button>
+      <div class="field"><label>Account / Wallet / Bank Name <span class="optional-tag">(optional)</span></label><input type="text" id="entryDetail" placeholder="e.g. 03001234567 or bank name"></div>
+      <button class="btn-dark" onclick="addEntry()" id="addEntryBtn">Add Salary</button>
     </div>
 
     <div class="month-select-row">
-      <div class="field">
-        <label>Viewing Month</label>
-        <select id="monthSelect" onchange="renderDetailForMonth()"></select>
-      </div>
+      <div class="field"><label>Viewing Month</label><select id="monthSelect" onchange="renderDetailForMonth()"></select></div>
     </div>
 
     <div class="ledger-box">
@@ -285,6 +297,37 @@
     <div id="entriesContainer"></div>
 
     <button class="danger-link" onclick="deleteCurrentStaff()">Remove this staff member</button>
+  </div>
+
+  <!-- ME (CASH BOOK) VIEW -->
+  <div id="meView" class="hidden">
+
+    <div class="month-select-row">
+      <div class="field"><label>Viewing Month</label><select id="meMonthSelect" onchange="renderMeForMonth()"></select></div>
+    </div>
+
+    <div class="split-summary">
+      <div class="split-box in"><div class="lbl">Total IN</div><div class="amt" id="meInTotal">Rs 0</div></div>
+      <div class="split-box out"><div class="lbl">Total OUT</div><div class="amt" id="meOutTotal">Rs 0</div></div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-outline-green" onclick="openMeForm('in')">+ IN</button>
+      <button class="btn-outline-red" onclick="openMeForm('out')">+ OUT</button>
+    </div>
+
+    <div class="form-card hidden" id="meForm">
+      <h3 id="meFormTitle">Add Amount</h3>
+      <div class="field"><label>Amount</label><input type="number" id="meAmount" placeholder="e.g. 2000" inputmode="decimal"></div>
+      <div class="field"><label>Note</label><textarea id="meNote" placeholder="Ye kahan se aayi / kise di — jo marzi likho"></textarea></div>
+      <div class="form-actions">
+        <button id="meSaveBtn" onclick="saveMeEntry()">Save</button>
+        <button class="btn-text" onclick="closeMeForm()">Cancel</button>
+      </div>
+    </div>
+
+    <div class="section-title">This Month's Entries</div>
+    <div id="meEntriesContainer"></div>
   </div>
 
 </div>
@@ -314,27 +357,27 @@ function setStatus(msg, kind){
 let staffList = [];
 let currentStaffId = null;
 let currentEntries = [];
+let meEntries = [];
+let meFormType = 'in';
 
 async function loadStaffList(){
   const snap = await db.ref(ROOT + '/staff').once('value');
   const val = snap.val() || {};
   staffList = Object.keys(val).map(id => ({ id, ...val[id] }));
 }
-
 async function loadEntries(staffId){
   const snap = await db.ref(ROOT + '/entries/' + staffId).once('value');
   const val = snap.val() || {};
   return Object.keys(val).map(id => ({ id, ...val[id] }));
 }
+async function loadMeEntries(){
+  const snap = await db.ref(ROOT + '/me').once('value');
+  const val = snap.val() || {};
+  return Object.keys(val).map(id => ({ id, ...val[id] }));
+}
 
-function todayISO(){
-  const d = new Date();
-  return d.toISOString().slice(0,10);
-}
-function nowTimeStr(){
-  const d = new Date();
-  return d.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'});
-}
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function nowTimeStr(){ return new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}); }
 function currentMonthKey(){ return todayISO().slice(0,7); }
 function fmtMoney(n){ return 'Rs ' + Number(n).toLocaleString('en-PK'); }
 function fmtDateShort(iso){
@@ -346,47 +389,55 @@ function monthLabel(key){
   const d = new Date(Number(y), Number(m)-1, 1);
   return d.toLocaleDateString('en-US', {month:'long', year:'numeric'});
 }
-
-async function monthTotalFor(staffId, monthKey){
-  const entries = await loadEntries(staffId);
-  return entries.filter(e => e.date.slice(0,7) === monthKey)
-                .reduce((s,e) => s + Number(e.amount), 0);
-}
-
-async function renderStaffListView(){
-  const container = document.getElementById('staffListContainer');
-  document.getElementById('staffCount').textContent = staffList.length + (staffList.length===1 ? ' member' : ' members');
-  if(staffList.length === 0){
-    container.innerHTML = '<div class="empty"><span class="slab">Koi staff nahi hai abhi</span>Upar se "Add Staff" dabayein pehla member add karne ke liye.</div>';
-    return;
-  }
-  const mk = currentMonthKey();
-  let html = '';
-  for(const s of staffList){
-    const total = await monthTotalFor(s.id, mk);
-    html += `<div class="staff-row" onclick="openStaff('${s.id}')">
-      <div class="info">
-        <div class="name">${escapeHtml(s.name)}</div>
-        <div class="meta">${s.phone ? escapeHtml(s.phone) : (s.account ? escapeHtml(s.account) : 'No contact info')}</div>
-      </div>
-      <div class="month-total">
-        <div class="amt">${fmtMoney(total)}</div>
-        <div class="lbl">this month</div>
-      </div>
-    </div>`;
-  }
-  container.innerHTML = html;
-}
-
 function escapeHtml(str){
   const div = document.createElement('div');
   div.textContent = str || '';
   return div.innerHTML;
 }
 
-function toggleAddForm(){
-  document.getElementById('addStaffForm').classList.toggle('hidden');
+async function monthTotalFor(staffId, monthKey){
+  const entries = await loadEntries(staffId);
+  return entries.filter(e => e.date.slice(0,7) === monthKey).reduce((s,e) => s + Number(e.amount), 0);
 }
+
+async function renderStaffListView(){
+  const container = document.getElementById('staffListContainer');
+  const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+  document.getElementById('staffCount').textContent = staffList.length + (staffList.length===1 ? ' member' : ' members');
+  document.getElementById('statStaffCount').textContent = staffList.length;
+
+  const mk = currentMonthKey();
+  let grandTotal = 0;
+  const rows = [];
+  for(const s of staffList){
+    const total = await monthTotalFor(s.id, mk);
+    grandTotal += total;
+    const haystack = (s.name + ' ' + (s.phone||'') + ' ' + (s.account||'')).toLowerCase();
+    if(q && !haystack.includes(q)) continue;
+    rows.push({ s, total });
+  }
+  document.getElementById('statMonthTotal').textContent = fmtMoney(grandTotal);
+
+  if(staffList.length === 0){
+    container.innerHTML = '<div class="empty"><span class="display">Koi staff nahi hai abhi</span>Neeche "+ Add Staff" dabayein pehla member add karne ke liye.</div>';
+    return;
+  }
+  if(rows.length === 0){
+    container.innerHTML = '<div class="empty">Is naam/number se koi member nahi mila.</div>';
+    return;
+  }
+  container.innerHTML = rows.map(({s, total}) => `
+    <div class="staff-row" onclick="openStaff('${s.id}')">
+      <div class="info">
+        <div class="name">${escapeHtml(s.name)}</div>
+        <div class="meta">${s.phone ? escapeHtml(s.phone) : (s.account ? escapeHtml(s.account) : 'No contact info')}</div>
+      </div>
+      <div class="amount-pill">${fmtMoney(total)}</div>
+    </div>
+  `).join('');
+}
+
+function toggleAddForm(){ document.getElementById('addStaffForm').classList.toggle('hidden'); }
 
 async function saveNewStaff(){
   const name = document.getElementById('newName').value.trim();
@@ -423,8 +474,11 @@ function showList(){
   currentStaffId = null;
   document.getElementById('listView').classList.remove('hidden');
   document.getElementById('detailView').classList.add('hidden');
+  document.getElementById('meView').classList.add('hidden');
   document.getElementById('listHeaderContent').classList.remove('hidden');
   document.getElementById('detailHeaderContent').classList.add('hidden');
+  document.getElementById('meHeaderContent').classList.add('hidden');
+  document.getElementById('bottomBar').classList.remove('hidden');
   renderStaffListView();
 }
 
@@ -435,8 +489,11 @@ async function openStaff(id){
 
   document.getElementById('listView').classList.add('hidden');
   document.getElementById('detailView').classList.remove('hidden');
+  document.getElementById('meView').classList.add('hidden');
   document.getElementById('listHeaderContent').classList.add('hidden');
   document.getElementById('detailHeaderContent').classList.remove('hidden');
+  document.getElementById('meHeaderContent').classList.add('hidden');
+  document.getElementById('bottomBar').classList.add('hidden');
 
   document.getElementById('detailName').textContent = staff.name;
   const metaBits = [];
@@ -446,6 +503,8 @@ async function openStaff(id){
   document.getElementById('detailMeta').textContent = metaBits.join(' · ');
 
   document.getElementById('entryDate').value = todayISO();
+  document.getElementById('entryMethod').value = '';
+  document.getElementById('entryDetail').value = '';
 
   currentEntries = await loadEntries(id);
   populateMonthSelect();
@@ -474,18 +533,24 @@ function renderDetailForMonth(){
     container.innerHTML = '<div class="empty">Is month ka koi record nahi hai.</div>';
     return;
   }
-  container.innerHTML = filtered.map(e => `
+  container.innerHTML = filtered.map(e => {
+    const payBits = [];
+    if(e.method) payBits.push(e.method);
+    if(e.detail) payBits.push(e.detail);
+    const payLine = payBits.length ? `<div class="pay">${escapeHtml(payBits.join(' · '))}</div>` : '';
+    return `
     <div class="entry-row">
       <div class="when">
         <div class="d">${fmtDateShort(e.date)}</div>
         <div class="t">${e.time}</div>
+        ${payLine}
       </div>
       <div class="amt-del">
         <div class="amt">${fmtMoney(e.amount)}</div>
         <button class="del-x" onclick="deleteEntry('${e.id}')">&times;</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 async function addEntry(){
@@ -493,15 +558,21 @@ async function addEntry(){
   const dateVal = document.getElementById('entryDate').value || todayISO();
   const amount = parseFloat(amountVal);
   if(!amount || amount <= 0){ alert('Sahi amount likhein'); return; }
+  const method = document.getElementById('entryMethod').value;
+  const detail = document.getElementById('entryDetail').value.trim();
 
   const btn = document.getElementById('addEntryBtn');
   btn.disabled = true; btn.textContent = 'Saving...';
   const entry = { date: dateVal, time: nowTimeStr(), amount: amount };
+  if(method) entry.method = method;
+  if(detail) entry.detail = detail;
   try{
     const newRef = db.ref(ROOT + '/entries/' + currentStaffId).push();
     await newRef.set(entry);
     currentEntries.push({ id: newRef.key, ...entry });
     document.getElementById('entryAmount').value = '';
+    document.getElementById('entryMethod').value = '';
+    document.getElementById('entryDetail').value = '';
     populateMonthSelect();
     document.getElementById('monthSelect').value = dateVal.slice(0,7);
     renderDetailForMonth();
@@ -522,10 +593,7 @@ async function deleteEntry(entryId){
     currentEntries = currentEntries.filter(e => e.id !== entryId);
     populateMonthSelect();
     renderDetailForMonth();
-  }catch(e){
-    console.error(e);
-    alert('Delete nahi ho saka.');
-  }
+  }catch(e){ console.error(e); alert('Delete nahi ho saka.'); }
 }
 
 async function deleteCurrentStaff(){
@@ -537,10 +605,118 @@ async function deleteCurrentStaff(){
     await db.ref(ROOT + '/entries/' + currentStaffId).remove();
     staffList = staffList.filter(s => s.id !== currentStaffId);
     showList();
+  }catch(e){ console.error(e); alert('Delete nahi ho saka.'); }
+}
+
+/* ---------------- ME (Cash Book) ---------------- */
+
+async function showMe(){
+  document.getElementById('listView').classList.add('hidden');
+  document.getElementById('detailView').classList.add('hidden');
+  document.getElementById('meView').classList.remove('hidden');
+  document.getElementById('listHeaderContent').classList.add('hidden');
+  document.getElementById('detailHeaderContent').classList.add('hidden');
+  document.getElementById('meHeaderContent').classList.remove('hidden');
+  document.getElementById('bottomBar').classList.add('hidden');
+  closeMeForm();
+
+  meEntries = await loadMeEntries();
+  populateMeMonthSelect();
+  renderMeForMonth();
+}
+
+function populateMeMonthSelect(){
+  const sel = document.getElementById('meMonthSelect');
+  const months = new Set(meEntries.map(e => e.date.slice(0,7)));
+  months.add(currentMonthKey());
+  const sorted = Array.from(months).sort().reverse();
+  sel.innerHTML = sorted.map(m => `<option value="${m}">${monthLabel(m)}</option>`).join('');
+  sel.value = currentMonthKey();
+}
+
+function openMeForm(type){
+  meFormType = type;
+  const form = document.getElementById('meForm');
+  form.classList.remove('hidden');
+  const btn = document.getElementById('meSaveBtn');
+  const title = document.getElementById('meFormTitle');
+  if(type === 'in'){
+    title.textContent = 'Add IN Amount';
+    btn.className = 'btn-green';
+  } else {
+    title.textContent = 'Add OUT Amount';
+    btn.className = 'btn-red';
+  }
+  form.scrollIntoView({behavior:'smooth', block:'center'});
+}
+function closeMeForm(){
+  document.getElementById('meForm').classList.add('hidden');
+  document.getElementById('meAmount').value = '';
+  document.getElementById('meNote').value = '';
+}
+
+function renderMeForMonth(){
+  const monthKey = document.getElementById('meMonthSelect').value;
+  const filtered = meEntries.filter(e => e.date.slice(0,7) === monthKey)
+                             .sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
+  const inTotal = filtered.filter(e=>e.type==='in').reduce((s,e)=>s+Number(e.amount),0);
+  const outTotal = filtered.filter(e=>e.type==='out').reduce((s,e)=>s+Number(e.amount),0);
+  document.getElementById('meInTotal').textContent = fmtMoney(inTotal);
+  document.getElementById('meOutTotal').textContent = fmtMoney(outTotal);
+
+  const container = document.getElementById('meEntriesContainer');
+  if(filtered.length === 0){
+    container.innerHTML = '<div class="empty">Is month ka koi record nahi hai.</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(e => `
+    <div class="entry-row">
+      <div class="when">
+        <div class="d">${fmtDateShort(e.date)}</div>
+        <div class="t">${e.time}</div>
+        ${e.note ? `<div class="note">${escapeHtml(e.note)}</div>` : ''}
+      </div>
+      <div class="amt-del">
+        <div class="amt ${e.type}">${e.type==='in' ? '+ ' : '- '}${fmtMoney(e.amount)}</div>
+        <button class="del-x" onclick="deleteMeEntry('${e.id}')">&times;</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function saveMeEntry(){
+  const amount = parseFloat(document.getElementById('meAmount').value);
+  if(!amount || amount <= 0){ alert('Sahi amount likhein'); return; }
+  const note = document.getElementById('meNote').value.trim();
+  const entry = { type: meFormType, amount, note, date: todayISO(), time: nowTimeStr() };
+  const btn = document.getElementById('meSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try{
+    const newRef = db.ref(ROOT + '/me').push();
+    await newRef.set(entry);
+    meEntries.push({ id: newRef.key, ...entry });
+    closeMeForm();
+    populateMeMonthSelect();
+    document.getElementById('meMonthSelect').value = entry.date.slice(0,7);
+    renderMeForMonth();
+    setStatus('Saved to Firebase.', 'ok');
   }catch(e){
     console.error(e);
-    alert('Delete nahi ho saka.');
+    setStatus('Save nahi hua — Firebase rules check karein.', 'error');
+    alert('Save nahi ho saka.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Save';
   }
+}
+
+async function deleteMeEntry(entryId){
+  if(!confirm('Ye entry delete karni hai?')) return;
+  try{
+    await db.ref(ROOT + '/me/' + entryId).remove();
+    meEntries = meEntries.filter(e => e.id !== entryId);
+    populateMeMonthSelect();
+    renderMeForMonth();
+  }catch(e){ console.error(e); alert('Delete nahi ho saka.'); }
 }
 
 async function init(){
@@ -557,6 +733,12 @@ async function init(){
 }
 init();
 </script>
+
+<div class="fixed-bottom" id="bottomBar">
+  <div class="wrap">
+    <button class="btn-dark" onclick="toggleAddForm()">+ Add Staff</button>
+  </div>
+</div>
 
 </body>
 </html>
