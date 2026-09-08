@@ -6,6 +6,8 @@
 <title>Staff Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   :root{
     --paper: #f3eedf;
@@ -72,6 +74,7 @@
     border-radius: 6px;
     font-size: 0.92rem;
   }
+  .btn-primary:disabled{ opacity: 0.6; }
   .btn-primary:active{ transform: translateY(1px); }
   .btn-ghost{
     background: transparent;
@@ -84,6 +87,14 @@
     background:none; color: var(--ink-soft); font-size: 0.85rem; text-decoration: underline;
     padding: 4px;
   }
+
+  .status-bar{
+    font-size: 0.78rem;
+    padding: 6px 0;
+    color: var(--ink-soft);
+  }
+  .status-bar.error{ color: var(--rust); font-weight: 600; }
+  .status-bar.ok{ color: var(--green-dark); }
 
   /* Staff list */
   .staff-row{
@@ -129,7 +140,7 @@
     color: var(--ink);
   }
   .field input:focus, .field select:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
-  .form-actions{ display:flex; gap:10px; margin-top: 12px; }
+  .form-actions{ display:flex; gap:10px; margin-top: 12px; align-items:center; }
 
   /* Detail view */
   .detail-header{
@@ -205,6 +216,8 @@
 
 <div class="wrap">
 
+  <div class="status-bar" id="statusBar">Connecting...</div>
+
   <!-- LIST VIEW -->
   <div id="listView">
     <div class="toolbar">
@@ -231,7 +244,7 @@
         <input type="text" id="newWallet" placeholder="e.g. Easypaisa / JazzCash">
       </div>
       <div class="form-actions">
-        <button class="btn-primary" onclick="saveNewStaff()">Save</button>
+        <button class="btn-primary" onclick="saveNewStaff()" id="saveStaffBtn">Save</button>
         <button class="btn-text" onclick="toggleAddForm()">Cancel</button>
       </div>
     </div>
@@ -252,7 +265,7 @@
         <label>Date</label>
         <input type="date" id="entryDate">
       </div>
-      <button class="btn-primary" onclick="addEntry()">Add Salary</button>
+      <button class="btn-primary" onclick="addEntry()" id="addEntryBtn">Add Salary</button>
     </div>
 
     <div class="month-select-row">
@@ -277,29 +290,41 @@
 </div>
 
 <script>
+// ---- Firebase setup ----
+const firebaseConfig = {
+  apiKey: "AIzaSyATJObjuRilTUQYg6OwLYj1DPd9gUfkVcE",
+  authDomain: "jkseller09-8e353.firebaseapp.com",
+  databaseURL: "https://jkseller09-8e353-default-rtdb.firebaseio.com",
+  projectId: "jkseller09-8e353",
+  storageBucket: "jkseller09-8e353.firebasestorage.app",
+  messagingSenderId: "173459652413",
+  appId: "1:173459652413:web:c887955afcef4a8dd6cf54",
+  measurementId: "G-MV4H67HYJY"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const ROOT = 'staffLedger';
+
+function setStatus(msg, kind){
+  const el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = 'status-bar' + (kind ? ' ' + kind : '');
+}
+
 let staffList = [];
 let currentStaffId = null;
 let currentEntries = [];
 
 async function loadStaffList(){
-  try{
-    const res = await window.storage.get('staff-list', false);
-    staffList = res ? JSON.parse(res.value) : [];
-  }catch(e){ staffList = []; }
+  const snap = await db.ref(ROOT + '/staff').once('value');
+  const val = snap.val() || {};
+  staffList = Object.keys(val).map(id => ({ id, ...val[id] }));
 }
-async function saveStaffList(){
-  try{ await window.storage.set('staff-list', JSON.stringify(staffList), false); }
-  catch(e){ console.error('save staff list failed', e); }
-}
+
 async function loadEntries(staffId){
-  try{
-    const res = await window.storage.get('entries-' + staffId, false);
-    return res ? JSON.parse(res.value) : [];
-  }catch(e){ return []; }
-}
-async function saveEntries(staffId, entries){
-  try{ await window.storage.set('entries-' + staffId, JSON.stringify(entries), false); }
-  catch(e){ console.error('save entries failed', e); }
+  const snap = await db.ref(ROOT + '/entries/' + staffId).once('value');
+  const val = snap.val() || {};
+  return Object.keys(val).map(id => ({ id, ...val[id] }));
 }
 
 function todayISO(){
@@ -366,21 +391,32 @@ function toggleAddForm(){
 async function saveNewStaff(){
   const name = document.getElementById('newName').value.trim();
   if(!name){ alert('Naam likhna zaroori hai'); return; }
+  const btn = document.getElementById('saveStaffBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
   const staff = {
-    id: 'st_' + Date.now(),
     name: name,
     account: document.getElementById('newAccount').value.trim(),
     phone: document.getElementById('newPhone').value.trim(),
     wallet: document.getElementById('newWallet').value.trim()
   };
-  staffList.push(staff);
-  await saveStaffList();
-  document.getElementById('newName').value = '';
-  document.getElementById('newAccount').value = '';
-  document.getElementById('newPhone').value = '';
-  document.getElementById('newWallet').value = '';
-  document.getElementById('addStaffForm').classList.add('hidden');
-  await renderStaffListView();
+  try{
+    const newRef = db.ref(ROOT + '/staff').push();
+    await newRef.set(staff);
+    staffList.push({ id: newRef.key, ...staff });
+    document.getElementById('newName').value = '';
+    document.getElementById('newAccount').value = '';
+    document.getElementById('newPhone').value = '';
+    document.getElementById('newWallet').value = '';
+    document.getElementById('addStaffForm').classList.add('hidden');
+    await renderStaffListView();
+    setStatus('Saved to Firebase.', 'ok');
+  }catch(e){
+    console.error(e);
+    setStatus('Save nahi hua — Firebase rules check karein.', 'error');
+    alert('Save nahi ho saka. Firebase Realtime Database rules mein read/write allow hona chahiye.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Save';
+  }
 }
 
 function showList(){
@@ -458,41 +494,66 @@ async function addEntry(){
   const amount = parseFloat(amountVal);
   if(!amount || amount <= 0){ alert('Sahi amount likhein'); return; }
 
-  const entry = {
-    id: 'en_' + Date.now(),
-    date: dateVal,
-    time: nowTimeStr(),
-    amount: amount
-  };
-  currentEntries.push(entry);
-  await saveEntries(currentStaffId, currentEntries);
-  document.getElementById('entryAmount').value = '';
-  populateMonthSelect();
-  document.getElementById('monthSelect').value = dateVal.slice(0,7);
-  renderDetailForMonth();
+  const btn = document.getElementById('addEntryBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const entry = { date: dateVal, time: nowTimeStr(), amount: amount };
+  try{
+    const newRef = db.ref(ROOT + '/entries/' + currentStaffId).push();
+    await newRef.set(entry);
+    currentEntries.push({ id: newRef.key, ...entry });
+    document.getElementById('entryAmount').value = '';
+    populateMonthSelect();
+    document.getElementById('monthSelect').value = dateVal.slice(0,7);
+    renderDetailForMonth();
+    setStatus('Saved to Firebase.', 'ok');
+  }catch(e){
+    console.error(e);
+    setStatus('Save nahi hua — Firebase rules check karein.', 'error');
+    alert('Save nahi ho saka. Firebase Realtime Database rules mein read/write allow hona chahiye.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Add Salary';
+  }
 }
 
 async function deleteEntry(entryId){
   if(!confirm('Ye entry delete karni hai?')) return;
-  currentEntries = currentEntries.filter(e => e.id !== entryId);
-  await saveEntries(currentStaffId, currentEntries);
-  populateMonthSelect();
-  renderDetailForMonth();
+  try{
+    await db.ref(ROOT + '/entries/' + currentStaffId + '/' + entryId).remove();
+    currentEntries = currentEntries.filter(e => e.id !== entryId);
+    populateMonthSelect();
+    renderDetailForMonth();
+  }catch(e){
+    console.error(e);
+    alert('Delete nahi ho saka.');
+  }
 }
 
 async function deleteCurrentStaff(){
   const staff = staffList.find(s => s.id === currentStaffId);
   if(!staff) return;
   if(!confirm(`"${staff.name}" ko aur unka sara salary record delete karna hai? Ye wapis nahi hoga.`)) return;
-  staffList = staffList.filter(s => s.id !== currentStaffId);
-  await saveStaffList();
-  try{ await window.storage.delete('entries-' + currentStaffId, false); }catch(e){}
-  showList();
+  try{
+    await db.ref(ROOT + '/staff/' + currentStaffId).remove();
+    await db.ref(ROOT + '/entries/' + currentStaffId).remove();
+    staffList = staffList.filter(s => s.id !== currentStaffId);
+    showList();
+  }catch(e){
+    console.error(e);
+    alert('Delete nahi ho saka.');
+  }
 }
 
 async function init(){
-  await loadStaffList();
-  await renderStaffListView();
+  try{
+    setStatus('Loading...');
+    await loadStaffList();
+    await renderStaffListView();
+    setStatus('Connected to Firebase.', 'ok');
+    setTimeout(() => setStatus(''), 2000);
+  }catch(e){
+    console.error(e);
+    setStatus('Firebase se connect nahi ho saka — rules check karein.', 'error');
+  }
 }
 init();
 </script>
