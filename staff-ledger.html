@@ -205,6 +205,7 @@
   .msg-bubble .txt{ font-size: 0.88rem; color: var(--text-dark); white-space: pre-wrap; word-break: break-word; }
   .msg-bubble .meta{ font-size: 0.65rem; color: var(--text-faint); margin-top: 3px; text-align: right; }
   .msg-bubble img{ max-width: 100%; border-radius: 8px; display: block; margin-bottom: 4px; }
+  .msg-bubble.theirs{ margin-left: 0; margin-right: auto; background: #eef2f9; }
 
   .chat-input-bar{
     display: flex;
@@ -266,6 +267,15 @@
       <button class="back-btn" onclick="showFeedback()">&larr; Student List</button>
       <h1 class="staff-title" id="fbThreadName"></h1>
     </div>
+    <div id="chatsHeaderContent" class="hidden">
+      <button class="back-btn" onclick="showList()">&larr; Staff List</button>
+      <h1>🔗 Student Chat</h1>
+      <p class="subtitle">Real students ke sath real chat</p>
+    </div>
+    <div id="chatThreadHeaderContent" class="hidden">
+      <button class="back-btn" onclick="showChats()">&larr; Chat List</button>
+      <h1 class="staff-title" id="chatThreadName"></h1>
+    </div>
   </div>
 </header>
 
@@ -290,6 +300,15 @@
       <div>
         <div class="name">Feedback</div>
         <div class="sub">Jo acha feedback mila usay yahan likh lo</div>
+      </div>
+      <div class="arrow">›</div>
+    </div>
+
+    <div class="me-card" onclick="showChats()">
+      <div class="ico">🔗</div>
+      <div>
+        <div class="name">Student Chat</div>
+        <div class="sub">Ek link banao, real student ke sath real chat karo</div>
       </div>
       <div class="arrow">›</div>
     </div>
@@ -412,6 +431,28 @@
     <div id="fbMessagesContainer" style="margin-bottom: 90px;"></div>
   </div>
 
+  <!-- STUDENT CHAT: list of chat links -->
+  <div id="chatsView" class="hidden">
+    <div class="form-card hidden" id="addChatForm">
+      <h3>New Chat Link</h3>
+      <div class="field"><label>Student ka naam (label ke liye)</label><input type="text" id="newChatName" placeholder="e.g. Ayesha Khan"></div>
+      <div class="form-actions">
+        <button class="btn-dark" onclick="createChat()" id="createChatBtn">Create Link</button>
+        <button class="btn-text" onclick="toggleAddChatForm()">Cancel</button>
+      </div>
+    </div>
+    <div class="toolbar">
+      <span class="count" id="chatsCount">0 chats</span>
+      <button class="btn-dark" style="width:auto; padding:9px 14px; font-size:0.85rem; border-radius:10px;" onclick="toggleAddChatForm()">+ New Chat</button>
+    </div>
+    <div id="chatsListContainer"></div>
+  </div>
+
+  <!-- STUDENT CHAT: thread as admin -->
+  <div id="chatThreadView" class="hidden">
+    <div id="chatMessagesContainer" style="margin-bottom: 90px;"></div>
+  </div>
+
 </div>
 
 <div class="fixed-bottom chat-input-bar hidden" id="fbChatBar">
@@ -421,6 +462,36 @@
     <textarea id="fbMessageInput" rows="1" placeholder="Message likho..." oninput="autoGrow(this)"></textarea>
   </div>
   <button class="chat-send-btn" onclick="sendFbMessage()" id="fbSendBtn">➤</button>
+</div>
+
+<div class="fixed-bottom chat-input-bar hidden" id="chatChatBar">
+  <button class="icon-btn" onclick="triggerChatImagePicker()" title="Send photo">📷</button>
+  <input type="file" accept="image/*" id="chatImageInput" style="display:none" onchange="handleChatImageSelected(event)">
+  <div class="pill">
+    <textarea id="chatMessageInput" rows="1" placeholder="Message likho..." oninput="autoGrow(this)"></textarea>
+  </div>
+  <button class="chat-send-btn" onclick="sendChatMessage()" id="chatSendBtn">➤</button>
+</div>
+
+<!-- PUBLIC STANDALONE CHAT PAGE: shown only when URL has ?chat=ID -->
+<div id="publicChatPage" class="hidden" style="position:fixed; inset:0; background:var(--cream); z-index:200; display:flex; flex-direction:column;">
+  <header style="border-radius:0; position:sticky; top:0;">
+    <div class="wrap">
+      <h1>🎓 Teach Hub</h1>
+      <p class="subtitle" id="publicChatTitle">Chat</p>
+    </div>
+  </header>
+  <div class="wrap" style="flex:1; overflow-y:auto;">
+    <div id="publicMessagesContainer" style="margin: 16px 0 90px;"></div>
+  </div>
+  <div class="chat-input-bar">
+    <button class="icon-btn" onclick="triggerPublicImagePicker()" title="Send photo">📷</button>
+    <input type="file" accept="image/*" id="publicImageInput" style="display:none" onchange="handlePublicImageSelected(event)">
+    <div class="pill">
+      <textarea id="publicMessageInput" rows="1" placeholder="Message likho..." oninput="autoGrow(this)"></textarea>
+    </div>
+    <button class="chat-send-btn" onclick="sendPublicMessage()" id="publicSendBtn">➤</button>
+  </div>
 </div>
 
 <script>
@@ -561,19 +632,32 @@ async function saveNewStaff(){
   }
 }
 
-function showList(){
-  currentStaffId = null;
-  document.getElementById('listView').classList.remove('hidden');
+function hideAllViews(){
+  document.getElementById('listView').classList.add('hidden');
   document.getElementById('detailView').classList.add('hidden');
   document.getElementById('meView').classList.add('hidden');
   document.getElementById('feedbackView').classList.add('hidden');
   document.getElementById('fbThreadView').classList.add('hidden');
   document.getElementById('fbChatBar').classList.add('hidden');
-  document.getElementById('listHeaderContent').classList.remove('hidden');
+  document.getElementById('chatsView').classList.add('hidden');
+  document.getElementById('chatThreadView').classList.add('hidden');
+  document.getElementById('chatChatBar').classList.add('hidden');
+  document.getElementById('listHeaderContent').classList.add('hidden');
   document.getElementById('detailHeaderContent').classList.add('hidden');
   document.getElementById('meHeaderContent').classList.add('hidden');
   document.getElementById('feedbackHeaderContent').classList.add('hidden');
   document.getElementById('fbThreadHeaderContent').classList.add('hidden');
+  document.getElementById('chatsHeaderContent').classList.add('hidden');
+  document.getElementById('chatThreadHeaderContent').classList.add('hidden');
+  document.getElementById('bottomBar').classList.add('hidden');
+  detachChatListener();
+}
+
+function showList(){
+  currentStaffId = null;
+  hideAllViews();
+  document.getElementById('listView').classList.remove('hidden');
+  document.getElementById('listHeaderContent').classList.remove('hidden');
   document.getElementById('bottomBar').classList.remove('hidden');
   renderStaffListView();
 }
@@ -583,18 +667,9 @@ async function openStaff(id){
   const staff = staffList.find(s => s.id === id);
   if(!staff) return;
 
-  document.getElementById('listView').classList.add('hidden');
+  hideAllViews();
   document.getElementById('detailView').classList.remove('hidden');
-  document.getElementById('meView').classList.add('hidden');
-  document.getElementById('feedbackView').classList.add('hidden');
-  document.getElementById('fbThreadView').classList.add('hidden');
-  document.getElementById('fbChatBar').classList.add('hidden');
-  document.getElementById('listHeaderContent').classList.add('hidden');
   document.getElementById('detailHeaderContent').classList.remove('hidden');
-  document.getElementById('meHeaderContent').classList.add('hidden');
-  document.getElementById('feedbackHeaderContent').classList.add('hidden');
-  document.getElementById('fbThreadHeaderContent').classList.add('hidden');
-  document.getElementById('bottomBar').classList.add('hidden');
 
   document.getElementById('detailName').textContent = staff.name;
   const metaBits = [];
@@ -712,18 +787,9 @@ async function deleteCurrentStaff(){
 /* ---------------- ME (Cash Book) ---------------- */
 
 async function showMe(){
-  document.getElementById('listView').classList.add('hidden');
-  document.getElementById('detailView').classList.add('hidden');
+  hideAllViews();
   document.getElementById('meView').classList.remove('hidden');
-  document.getElementById('feedbackView').classList.add('hidden');
-  document.getElementById('fbThreadView').classList.add('hidden');
-  document.getElementById('fbChatBar').classList.add('hidden');
-  document.getElementById('listHeaderContent').classList.add('hidden');
-  document.getElementById('detailHeaderContent').classList.add('hidden');
   document.getElementById('meHeaderContent').classList.remove('hidden');
-  document.getElementById('feedbackHeaderContent').classList.add('hidden');
-  document.getElementById('fbThreadHeaderContent').classList.add('hidden');
-  document.getElementById('bottomBar').classList.add('hidden');
   closeMeForm();
 
   meEntries = await loadMeEntries();
@@ -843,18 +909,9 @@ async function loadFbMessages(studentId){
 }
 
 async function showFeedback(){
-  document.getElementById('listView').classList.add('hidden');
-  document.getElementById('detailView').classList.add('hidden');
-  document.getElementById('meView').classList.add('hidden');
+  hideAllViews();
   document.getElementById('feedbackView').classList.remove('hidden');
-  document.getElementById('fbThreadView').classList.add('hidden');
-  document.getElementById('fbChatBar').classList.add('hidden');
-  document.getElementById('listHeaderContent').classList.add('hidden');
-  document.getElementById('detailHeaderContent').classList.add('hidden');
-  document.getElementById('meHeaderContent').classList.add('hidden');
   document.getElementById('feedbackHeaderContent').classList.remove('hidden');
-  document.getElementById('fbThreadHeaderContent').classList.add('hidden');
-  document.getElementById('bottomBar').classList.add('hidden');
   document.getElementById('addFbStudentForm').classList.add('hidden');
 
   fbStudents = await loadFbStudents();
@@ -1014,6 +1071,236 @@ async function sendFbMessage(){
   }
 }
 
+/* ---------------- Student Chat (real two-way chat via shareable link) ---------------- */
+
+let chatsList = [];
+let currentChatId = null;
+let currentChatRole = null; // 'admin' or 'student'
+let activeChatListenerRef = null;
+
+async function loadChats(){
+  const snap = await db.ref(ROOT + '/studentChats').once('value');
+  const val = snap.val() || {};
+  return Object.keys(val).map(id => ({ id, name: (val[id] && val[id].name) || 'Unnamed' }));
+}
+
+async function showChats(){
+  hideAllViews();
+  document.getElementById('chatsView').classList.remove('hidden');
+  document.getElementById('chatsHeaderContent').classList.remove('hidden');
+  document.getElementById('addChatForm').classList.add('hidden');
+
+  chatsList = await loadChats();
+  renderChatsList();
+}
+
+function toggleAddChatForm(){
+  document.getElementById('addChatForm').classList.toggle('hidden');
+}
+
+function renderChatsList(){
+  document.getElementById('chatsCount').textContent = chatsList.length + (chatsList.length===1 ? ' chat' : ' chats');
+  const container = document.getElementById('chatsListContainer');
+  if(chatsList.length === 0){
+    container.innerHTML = '<div class="empty"><span class="display">Koi chat link nahi hai abhi</span>"+ New Chat" se ek link banao aur student ko bhejo.</div>';
+    return;
+  }
+  container.innerHTML = chatsList.map(c => `
+    <div class="staff-row">
+      <div class="info" style="cursor:pointer;" onclick="openAdminChatThread('${c.id}')">
+        <div class="name">${escapeHtml(c.name)}</div>
+      </div>
+      <button class="icon-btn" onclick="copyChatLink('${c.id}')" title="Copy link">🔗</button>
+    </div>
+  `).join('');
+}
+
+function chatLinkFor(chatId){
+  return location.origin + location.pathname + '?chat=' + chatId;
+}
+
+function copyChatLink(chatId){
+  const link = chatLinkFor(chatId);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(() => {
+      alert('Link copy ho gaya:\n' + link);
+    }).catch(() => {
+      prompt('Ye link copy karke student ko bhejo:', link);
+    });
+  } else {
+    prompt('Ye link copy karke student ko bhejo:', link);
+  }
+}
+
+async function createChat(){
+  const name = document.getElementById('newChatName').value.trim() || 'Unnamed';
+  const btn = document.getElementById('createChatBtn');
+  btn.disabled = true; btn.textContent = 'Creating...';
+  try{
+    const newRef = db.ref(ROOT + '/studentChats').push();
+    await newRef.set({ name, createdAt: todayISO() });
+    chatsList.push({ id: newRef.key, name });
+    document.getElementById('newChatName').value = '';
+    document.getElementById('addChatForm').classList.add('hidden');
+    renderChatsList();
+    copyChatLink(newRef.key);
+  }catch(e){
+    console.error(e);
+    alert('Link nahi ban saka.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Create Link';
+  }
+}
+
+function detachChatListener(){
+  if(activeChatListenerRef){
+    activeChatListenerRef.off();
+    activeChatListenerRef = null;
+  }
+}
+
+function attachChatListener(chatId, containerId, viewerRole){
+  detachChatListener();
+  activeChatListenerRef = db.ref(ROOT + '/studentChats/' + chatId + '/messages');
+  activeChatListenerRef.on('value', snap => {
+    const val = snap.val() || {};
+    const messages = Object.keys(val).map(id => ({ id, ...val[id] }))
+      .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+    renderChatMessagesGeneric(containerId, messages, viewerRole);
+  });
+}
+
+function renderChatMessagesGeneric(containerId, messages, viewerRole){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  if(messages.length === 0){
+    container.innerHTML = '<div class="empty">Abhi tak koi message nahi.</div>';
+    return;
+  }
+  container.innerHTML = messages.map(m => {
+    const mine = m.sender === viewerRole;
+    return `<div class="msg-bubble ${mine ? '' : 'theirs'}">
+      ${m.image ? `<img src="${m.image}" alt="photo">` : ''}
+      ${m.text ? `<div class="txt">${escapeHtml(m.text)}</div>` : ''}
+      <div class="meta">${fmtDateShort(m.date)} · ${m.time}</div>
+    </div>`;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+async function openAdminChatThread(chatId){
+  currentChatId = chatId;
+  currentChatRole = 'admin';
+  const chat = chatsList.find(c => c.id === chatId);
+
+  hideAllViews();
+  document.getElementById('chatThreadView').classList.remove('hidden');
+  document.getElementById('chatThreadHeaderContent').classList.remove('hidden');
+  document.getElementById('chatThreadName').textContent = chat ? chat.name : 'Chat';
+  document.getElementById('chatChatBar').classList.remove('hidden');
+  document.getElementById('chatMessageInput').value = '';
+
+  attachChatListener(chatId, 'chatMessagesContainer', 'admin');
+}
+
+async function sendChatMessage(){
+  const text = document.getElementById('chatMessageInput').value.trim();
+  if(!text) return;
+  const btn = document.getElementById('chatSendBtn');
+  btn.disabled = true;
+  try{
+    await db.ref(ROOT + '/studentChats/' + currentChatId + '/messages').push({
+      sender: 'admin', text, date: todayISO(), time: nowTimeStr()
+    });
+    document.getElementById('chatMessageInput').value = '';
+    document.getElementById('chatMessageInput').style.height = 'auto';
+  }catch(e){
+    console.error(e);
+    alert('Message bhej nahi saka.');
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+function triggerChatImagePicker(){
+  document.getElementById('chatImageInput').click();
+}
+
+async function handleChatImageSelected(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  try{
+    const dataUrl = await compressImage(file, 800, 0.65);
+    const caption = document.getElementById('chatMessageInput').value.trim();
+    const entry = { sender: 'admin', image: dataUrl, date: todayISO(), time: nowTimeStr() };
+    if(caption) entry.text = caption;
+    await db.ref(ROOT + '/studentChats/' + currentChatId + '/messages').push(entry);
+    document.getElementById('chatMessageInput').value = '';
+  }catch(e){
+    console.error(e);
+    alert('Photo bhej nahi saki.');
+  }finally{
+    event.target.value = '';
+  }
+}
+
+/* ---------------- Public standalone chat page (for the real student) ---------------- */
+
+async function initPublicChat(chatId){
+  currentChatId = chatId;
+  currentChatRole = 'student';
+  document.getElementById('publicChatPage').classList.remove('hidden');
+
+  try{
+    const snap = await db.ref(ROOT + '/studentChats/' + chatId + '/name').once('value');
+    const name = snap.val();
+    document.getElementById('publicChatTitle').textContent = name ? ('Chat — ' + name) : 'Chat';
+  }catch(e){}
+
+  attachChatListener(chatId, 'publicMessagesContainer', 'student');
+}
+
+async function sendPublicMessage(){
+  const text = document.getElementById('publicMessageInput').value.trim();
+  if(!text) return;
+  const btn = document.getElementById('publicSendBtn');
+  btn.disabled = true;
+  try{
+    await db.ref(ROOT + '/studentChats/' + currentChatId + '/messages').push({
+      sender: 'student', text, date: todayISO(), time: nowTimeStr()
+    });
+    document.getElementById('publicMessageInput').value = '';
+    document.getElementById('publicMessageInput').style.height = 'auto';
+  }catch(e){
+    console.error(e);
+    alert('Message bhej nahi saka.');
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+function triggerPublicImagePicker(){
+  document.getElementById('publicImageInput').click();
+}
+
+async function handlePublicImageSelected(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  try{
+    const dataUrl = await compressImage(file, 800, 0.65);
+    const caption = document.getElementById('publicMessageInput').value.trim();
+    const entry = { sender: 'student', image: dataUrl, date: todayISO(), time: nowTimeStr() };
+    if(caption) entry.text = caption;
+    await db.ref(ROOT + '/studentChats/' + currentChatId + '/messages').push(entry);
+    document.getElementById('publicMessageInput').value = '';
+  }catch(e){
+    console.error(e);
+    alert('Photo bhej nahi saki.');
+  }finally{
+    event.target.value = '';
+  }
+}
+
 async function init(){
   try{
     setStatus('Loading...');
@@ -1026,7 +1313,14 @@ async function init(){
     setStatus('Firebase se connect nahi ho saka — rules check karein.', 'error');
   }
 }
-init();
+
+const urlParams = new URLSearchParams(window.location.search);
+const publicChatId = urlParams.get('chat');
+if(publicChatId){
+  initPublicChat(publicChatId);
+} else {
+  init();
+}
 </script>
 
 <div class="fixed-bottom" id="bottomBar">
