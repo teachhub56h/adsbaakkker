@@ -194,6 +194,14 @@
   .danger-link{ color: var(--red-text); background:none; font-size: 0.82rem; margin-top: 22px; text-decoration:underline; }
 
   .hidden{ display:none !important; }
+
+  .msg-bubble{
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 14px;
+    padding: 12px 14px; margin-bottom: 8px; box-shadow: var(--shadow); max-width: 85%;
+    margin-left: auto;
+  }
+  .msg-bubble .txt{ font-size: 0.9rem; color: var(--text-dark); white-space: pre-wrap; word-break: break-word; }
+  .msg-bubble .meta{ font-size: 0.68rem; color: var(--text-faint); margin-top: 6px; text-align: right; }
 </style>
 </head>
 <body>
@@ -221,7 +229,11 @@
     <div id="feedbackHeaderContent" class="hidden">
       <button class="back-btn" onclick="showList()">&larr; Staff List</button>
       <h1>💬 Feedback</h1>
-      <p class="subtitle">Log kind words you received</p>
+      <p class="subtitle">Students ki list, apne messages/notes</p>
+    </div>
+    <div id="fbThreadHeaderContent" class="hidden">
+      <button class="back-btn" onclick="showFeedback()">&larr; Student List</button>
+      <h1 class="staff-title" id="fbThreadName"></h1>
     </div>
   </div>
 </header>
@@ -344,18 +356,36 @@
     <div id="meEntriesContainer"></div>
   </div>
 
-  <!-- FEEDBACK VIEW -->
+  <!-- FEEDBACK VIEW (Student list) -->
   <div id="feedbackView" class="hidden">
 
-    <div class="form-card">
-      <h3>Add Feedback</h3>
-      <div class="field"><label>Name (kisne diya)</label><input type="text" id="fbName" placeholder="e.g. Sana Mukhtar's parent"></div>
-      <div class="field"><label>Feedback Message</label><textarea id="fbMessage" placeholder="Jo message mila wahi yahan likh do — apne alfaz mein bhi likh sakte ho"></textarea></div>
-      <button class="btn-dark" onclick="saveFeedback()" id="fbSaveBtn">Save Feedback</button>
+    <div class="form-card hidden" id="addFbStudentForm">
+      <h3>New Student</h3>
+      <div class="field"><label>Student Name</label><input type="text" id="fbStudentName" placeholder="Student ka naam"></div>
+      <div class="form-actions">
+        <button class="btn-dark" onclick="saveFbStudent()" id="fbStudentSaveBtn">Save</button>
+        <button class="btn-text" onclick="toggleFbStudentForm()">Cancel</button>
+      </div>
     </div>
 
-    <div class="section-title">Saved Feedback</div>
-    <div id="feedbackContainer"></div>
+    <div class="toolbar">
+      <span class="count" id="fbStudentCount">0 students</span>
+      <button class="toolbar .add-link btn-dark" style="width:auto; padding:9px 14px; font-size:0.85rem; border-radius:10px;" onclick="toggleFbStudentForm()">+ Add Student</button>
+    </div>
+
+    <div id="fbStudentListContainer"></div>
+  </div>
+
+  <!-- FEEDBACK VIEW (Message thread for one student) -->
+  <div id="fbThreadView" class="hidden">
+
+    <div id="fbMessagesContainer" style="margin-bottom: 16px;"></div>
+
+    <div class="form-card">
+      <h3 id="fbThreadTitle">Message</h3>
+      <div class="field"><textarea id="fbMessageInput" placeholder="Message likho..."></textarea></div>
+      <button class="btn-dark" onclick="sendFbMessage()" id="fbSendBtn">Send</button>
+    </div>
   </div>
 
 </div>
@@ -504,10 +534,12 @@ function showList(){
   document.getElementById('detailView').classList.add('hidden');
   document.getElementById('meView').classList.add('hidden');
   document.getElementById('feedbackView').classList.add('hidden');
+  document.getElementById('fbThreadView').classList.add('hidden');
   document.getElementById('listHeaderContent').classList.remove('hidden');
   document.getElementById('detailHeaderContent').classList.add('hidden');
   document.getElementById('meHeaderContent').classList.add('hidden');
   document.getElementById('feedbackHeaderContent').classList.add('hidden');
+  document.getElementById('fbThreadHeaderContent').classList.add('hidden');
   document.getElementById('bottomBar').classList.remove('hidden');
   renderStaffListView();
 }
@@ -647,10 +679,12 @@ async function showMe(){
   document.getElementById('detailView').classList.add('hidden');
   document.getElementById('meView').classList.remove('hidden');
   document.getElementById('feedbackView').classList.add('hidden');
+  document.getElementById('fbThreadView').classList.add('hidden');
   document.getElementById('listHeaderContent').classList.add('hidden');
   document.getElementById('detailHeaderContent').classList.add('hidden');
   document.getElementById('meHeaderContent').classList.remove('hidden');
   document.getElementById('feedbackHeaderContent').classList.add('hidden');
+  document.getElementById('fbThreadHeaderContent').classList.add('hidden');
   document.getElementById('bottomBar').classList.add('hidden');
   closeMeForm();
 
@@ -753,14 +787,21 @@ async function deleteMeEntry(entryId){
   }catch(e){ console.error(e); alert('Delete nahi ho saka.'); }
 }
 
-/* ---------------- Feedback ---------------- */
+/* ---------------- Feedback (Student message log) ---------------- */
 
-let feedbackList = [];
+let fbStudents = [];
+let currentFbStudentId = null;
+let currentFbMessages = [];
 
-async function loadFeedback(){
-  const snap = await db.ref(ROOT + '/feedback').once('value');
+async function loadFbStudents(){
+  const snap = await db.ref(ROOT + '/feedbackStudents').once('value');
   const val = snap.val() || {};
-  return Object.keys(val).map(id => ({ id, ...val[id] })).sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
+  return Object.keys(val).map(id => ({ id, ...val[id] }));
+}
+async function loadFbMessages(studentId){
+  const snap = await db.ref(ROOT + '/feedbackMessages/' + studentId).once('value');
+  const val = snap.val() || {};
+  return Object.keys(val).map(id => ({ id, ...val[id] })).sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
 }
 
 async function showFeedback(){
@@ -768,66 +809,110 @@ async function showFeedback(){
   document.getElementById('detailView').classList.add('hidden');
   document.getElementById('meView').classList.add('hidden');
   document.getElementById('feedbackView').classList.remove('hidden');
+  document.getElementById('fbThreadView').classList.add('hidden');
   document.getElementById('listHeaderContent').classList.add('hidden');
   document.getElementById('detailHeaderContent').classList.add('hidden');
   document.getElementById('meHeaderContent').classList.add('hidden');
   document.getElementById('feedbackHeaderContent').classList.remove('hidden');
+  document.getElementById('fbThreadHeaderContent').classList.add('hidden');
   document.getElementById('bottomBar').classList.add('hidden');
+  document.getElementById('addFbStudentForm').classList.add('hidden');
 
-  feedbackList = await loadFeedback();
-  renderFeedback();
+  fbStudents = await loadFbStudents();
+  renderFbStudentList();
 }
 
-function renderFeedback(){
-  const container = document.getElementById('feedbackContainer');
-  if(feedbackList.length === 0){
-    container.innerHTML = '<div class="empty">Abhi tak koi feedback save nahi kiya.</div>';
+function toggleFbStudentForm(){
+  document.getElementById('addFbStudentForm').classList.toggle('hidden');
+}
+
+function renderFbStudentList(){
+  document.getElementById('fbStudentCount').textContent = fbStudents.length + (fbStudents.length===1 ? ' student' : ' students');
+  const container = document.getElementById('fbStudentListContainer');
+  if(fbStudents.length === 0){
+    container.innerHTML = '<div class="empty"><span class="display">Koi student nahi hai abhi</span>"+ Add Student" se pehla student add karo.</div>';
     return;
   }
-  container.innerHTML = feedbackList.map(f => `
-    <div class="entry-row">
-      <div class="when" style="max-width: 75%;">
-        <div class="d">${escapeHtml(f.name)}</div>
-        <div class="note" style="max-width: none; margin-top: 4px;">${escapeHtml(f.message)}</div>
-        <div class="t" style="margin-top: 6px;">${fmtDateShort(f.date)} · ${f.time}</div>
-      </div>
-      <button class="del-x" onclick="deleteFeedback('${f.id}')">&times;</button>
+  container.innerHTML = fbStudents.map(s => `
+    <div class="staff-row" onclick="openFbThread('${s.id}')">
+      <div class="info"><div class="name">${escapeHtml(s.name)}</div></div>
+      <div class="arrow" style="color: var(--text-faint); font-size:1.2rem;">›</div>
     </div>
   `).join('');
 }
 
-async function saveFeedback(){
-  const name = document.getElementById('fbName').value.trim();
-  const message = document.getElementById('fbMessage').value.trim();
-  if(!name || !message){ alert('Naam aur feedback message dono likhein'); return; }
-
-  const btn = document.getElementById('fbSaveBtn');
+async function saveFbStudent(){
+  const name = document.getElementById('fbStudentName').value.trim();
+  if(!name){ alert('Naam likhna zaroori hai'); return; }
+  const btn = document.getElementById('fbStudentSaveBtn');
   btn.disabled = true; btn.textContent = 'Saving...';
-  const entry = { name, message, date: todayISO(), time: nowTimeStr() };
   try{
-    const newRef = db.ref(ROOT + '/feedback').push();
-    await newRef.set(entry);
-    feedbackList.unshift({ id: newRef.key, ...entry });
-    document.getElementById('fbName').value = '';
-    document.getElementById('fbMessage').value = '';
-    renderFeedback();
+    const newRef = db.ref(ROOT + '/feedbackStudents').push();
+    await newRef.set({ name });
+    fbStudents.push({ id: newRef.key, name });
+    document.getElementById('fbStudentName').value = '';
+    document.getElementById('addFbStudentForm').classList.add('hidden');
+    renderFbStudentList();
     setStatus('Saved to Firebase.', 'ok');
   }catch(e){
     console.error(e);
     setStatus('Save nahi hua — Firebase rules check karein.', 'error');
     alert('Save nahi ho saka.');
   }finally{
-    btn.disabled = false; btn.textContent = 'Save Feedback';
+    btn.disabled = false; btn.textContent = 'Save';
   }
 }
 
-async function deleteFeedback(id){
-  if(!confirm('Ye feedback delete karna hai?')) return;
+async function openFbThread(studentId){
+  currentFbStudentId = studentId;
+  const student = fbStudents.find(s => s.id === studentId);
+  if(!student) return;
+
+  document.getElementById('feedbackView').classList.add('hidden');
+  document.getElementById('fbThreadView').classList.remove('hidden');
+  document.getElementById('feedbackHeaderContent').classList.add('hidden');
+  document.getElementById('fbThreadHeaderContent').classList.remove('hidden');
+  document.getElementById('fbThreadName').textContent = student.name;
+  document.getElementById('fbMessageInput').value = '';
+
+  currentFbMessages = await loadFbMessages(studentId);
+  renderFbMessages();
+}
+
+function renderFbMessages(){
+  const container = document.getElementById('fbMessagesContainer');
+  if(currentFbMessages.length === 0){
+    container.innerHTML = '<div class="empty">Abhi tak koi message nahi bheja.</div>';
+    return;
+  }
+  container.innerHTML = currentFbMessages.map(m => `
+    <div class="msg-bubble">
+      <div class="txt">${escapeHtml(m.text)}</div>
+      <div class="meta">${fmtDateShort(m.date)} · ${m.time}</div>
+    </div>
+  `).join('');
+}
+
+async function sendFbMessage(){
+  const text = document.getElementById('fbMessageInput').value.trim();
+  if(!text){ return; }
+  const btn = document.getElementById('fbSendBtn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  const entry = { text, date: todayISO(), time: nowTimeStr() };
   try{
-    await db.ref(ROOT + '/feedback/' + id).remove();
-    feedbackList = feedbackList.filter(f => f.id !== id);
-    renderFeedback();
-  }catch(e){ console.error(e); alert('Delete nahi ho saka.'); }
+    const newRef = db.ref(ROOT + '/feedbackMessages/' + currentFbStudentId).push();
+    await newRef.set(entry);
+    currentFbMessages.push({ id: newRef.key, ...entry });
+    document.getElementById('fbMessageInput').value = '';
+    renderFbMessages();
+    setStatus('Saved to Firebase.', 'ok');
+  }catch(e){
+    console.error(e);
+    setStatus('Save nahi hua — Firebase rules check karein.', 'error');
+    alert('Save nahi ho saka.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Send';
+  }
 }
 
 async function init(){
