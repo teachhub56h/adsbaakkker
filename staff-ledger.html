@@ -218,6 +218,11 @@
       <h1>💰 ME</h1>
       <p class="subtitle">Your Personal Cash Book</p>
     </div>
+    <div id="feedbackHeaderContent" class="hidden">
+      <button class="back-btn" onclick="showList()">&larr; Staff List</button>
+      <h1>💬 Feedback</h1>
+      <p class="subtitle">Log kind words you received</p>
+    </div>
   </div>
 </header>
 
@@ -233,6 +238,15 @@
       <div>
         <div class="name">ME — Cash Book</div>
         <div class="sub">Apni personal income & expense track karo</div>
+      </div>
+      <div class="arrow">›</div>
+    </div>
+
+    <div class="me-card" onclick="showFeedback()">
+      <div class="ico">💬</div>
+      <div>
+        <div class="name">Feedback</div>
+        <div class="sub">Jo acha feedback mila usay yahan likh lo</div>
       </div>
       <div class="arrow">›</div>
     </div>
@@ -328,6 +342,20 @@
 
     <div class="section-title">This Month's Entries</div>
     <div id="meEntriesContainer"></div>
+  </div>
+
+  <!-- FEEDBACK VIEW -->
+  <div id="feedbackView" class="hidden">
+
+    <div class="form-card">
+      <h3>Add Feedback</h3>
+      <div class="field"><label>Name (kisne diya)</label><input type="text" id="fbName" placeholder="e.g. Sana Mukhtar's parent"></div>
+      <div class="field"><label>Feedback Message</label><textarea id="fbMessage" placeholder="Jo message mila wahi yahan likh do — apne alfaz mein bhi likh sakte ho"></textarea></div>
+      <button class="btn-dark" onclick="saveFeedback()" id="fbSaveBtn">Save Feedback</button>
+    </div>
+
+    <div class="section-title">Saved Feedback</div>
+    <div id="feedbackContainer"></div>
   </div>
 
 </div>
@@ -475,9 +503,11 @@ function showList(){
   document.getElementById('listView').classList.remove('hidden');
   document.getElementById('detailView').classList.add('hidden');
   document.getElementById('meView').classList.add('hidden');
+  document.getElementById('feedbackView').classList.add('hidden');
   document.getElementById('listHeaderContent').classList.remove('hidden');
   document.getElementById('detailHeaderContent').classList.add('hidden');
   document.getElementById('meHeaderContent').classList.add('hidden');
+  document.getElementById('feedbackHeaderContent').classList.add('hidden');
   document.getElementById('bottomBar').classList.remove('hidden');
   renderStaffListView();
 }
@@ -490,9 +520,11 @@ async function openStaff(id){
   document.getElementById('listView').classList.add('hidden');
   document.getElementById('detailView').classList.remove('hidden');
   document.getElementById('meView').classList.add('hidden');
+  document.getElementById('feedbackView').classList.add('hidden');
   document.getElementById('listHeaderContent').classList.add('hidden');
   document.getElementById('detailHeaderContent').classList.remove('hidden');
   document.getElementById('meHeaderContent').classList.add('hidden');
+  document.getElementById('feedbackHeaderContent').classList.add('hidden');
   document.getElementById('bottomBar').classList.add('hidden');
 
   document.getElementById('detailName').textContent = staff.name;
@@ -614,9 +646,11 @@ async function showMe(){
   document.getElementById('listView').classList.add('hidden');
   document.getElementById('detailView').classList.add('hidden');
   document.getElementById('meView').classList.remove('hidden');
+  document.getElementById('feedbackView').classList.add('hidden');
   document.getElementById('listHeaderContent').classList.add('hidden');
   document.getElementById('detailHeaderContent').classList.add('hidden');
   document.getElementById('meHeaderContent').classList.remove('hidden');
+  document.getElementById('feedbackHeaderContent').classList.add('hidden');
   document.getElementById('bottomBar').classList.add('hidden');
   closeMeForm();
 
@@ -716,6 +750,83 @@ async function deleteMeEntry(entryId){
     meEntries = meEntries.filter(e => e.id !== entryId);
     populateMeMonthSelect();
     renderMeForMonth();
+  }catch(e){ console.error(e); alert('Delete nahi ho saka.'); }
+}
+
+/* ---------------- Feedback ---------------- */
+
+let feedbackList = [];
+
+async function loadFeedback(){
+  const snap = await db.ref(ROOT + '/feedback').once('value');
+  const val = snap.val() || {};
+  return Object.keys(val).map(id => ({ id, ...val[id] })).sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
+}
+
+async function showFeedback(){
+  document.getElementById('listView').classList.add('hidden');
+  document.getElementById('detailView').classList.add('hidden');
+  document.getElementById('meView').classList.add('hidden');
+  document.getElementById('feedbackView').classList.remove('hidden');
+  document.getElementById('listHeaderContent').classList.add('hidden');
+  document.getElementById('detailHeaderContent').classList.add('hidden');
+  document.getElementById('meHeaderContent').classList.add('hidden');
+  document.getElementById('feedbackHeaderContent').classList.remove('hidden');
+  document.getElementById('bottomBar').classList.add('hidden');
+
+  feedbackList = await loadFeedback();
+  renderFeedback();
+}
+
+function renderFeedback(){
+  const container = document.getElementById('feedbackContainer');
+  if(feedbackList.length === 0){
+    container.innerHTML = '<div class="empty">Abhi tak koi feedback save nahi kiya.</div>';
+    return;
+  }
+  container.innerHTML = feedbackList.map(f => `
+    <div class="entry-row">
+      <div class="when" style="max-width: 75%;">
+        <div class="d">${escapeHtml(f.name)}</div>
+        <div class="note" style="max-width: none; margin-top: 4px;">${escapeHtml(f.message)}</div>
+        <div class="t" style="margin-top: 6px;">${fmtDateShort(f.date)} · ${f.time}</div>
+      </div>
+      <button class="del-x" onclick="deleteFeedback('${f.id}')">&times;</button>
+    </div>
+  `).join('');
+}
+
+async function saveFeedback(){
+  const name = document.getElementById('fbName').value.trim();
+  const message = document.getElementById('fbMessage').value.trim();
+  if(!name || !message){ alert('Naam aur feedback message dono likhein'); return; }
+
+  const btn = document.getElementById('fbSaveBtn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const entry = { name, message, date: todayISO(), time: nowTimeStr() };
+  try{
+    const newRef = db.ref(ROOT + '/feedback').push();
+    await newRef.set(entry);
+    feedbackList.unshift({ id: newRef.key, ...entry });
+    document.getElementById('fbName').value = '';
+    document.getElementById('fbMessage').value = '';
+    renderFeedback();
+    setStatus('Saved to Firebase.', 'ok');
+  }catch(e){
+    console.error(e);
+    setStatus('Save nahi hua — Firebase rules check karein.', 'error');
+    alert('Save nahi ho saka.');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Save Feedback';
+  }
+}
+
+async function deleteFeedback(id){
+  if(!confirm('Ye feedback delete karna hai?')) return;
+  try{
+    await db.ref(ROOT + '/feedback/' + id).remove();
+    feedbackList = feedbackList.filter(f => f.id !== id);
+    renderFeedback();
   }catch(e){ console.error(e); alert('Delete nahi ho saka.'); }
 }
 
